@@ -1,13 +1,12 @@
 package com.tenpearls;
 
-/**
- * A simple application that doesn't use Spring Boot.
- */
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class SimpleApplication {
-    
+
     public static void main(String[] args) {
-        System.out.println("Starting SimpleApplication");
-        System.out.println("ATDAID Framework is ready for testing");
-        System.out.println("Run tests using: mvn test");
+        SpringApplication.run(SimpleApplication.class, args);
     }
 }
