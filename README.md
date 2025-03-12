@@ -1,41 +1,32 @@
 # ATDAID Framework
 
-## Acceptance Test Driven AI Development Framework
+## Acceptance Test-Driven AI Development Framework
 
-ATDAID (Acceptance Test Driven AI Development) is a testing framework designed to facilitate test-driven development for AI-enhanced applications. It provides a structured approach to writing acceptance tests that can be used to validate the behavior of AI components within your application.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Project Structure](#project-structure)
-- [Writing Tests](#writing-tests)
-  - [Acceptance Tests](#acceptance-tests)
-  - [Service Tests](#service-tests)
-- [Running Tests](#running-tests)
-- [Configuration](#configuration)
-- [Logging](#logging)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Overview
-
-ATDAID Framework is built on top of Spring Boot and provides a comprehensive testing infrastructure for developing applications with AI components. It follows the principles of Acceptance Test Driven Development (ATDD) and extends them to accommodate the unique challenges of testing AI systems.
+ATDAID (Acceptance Test-Driven AI Development) is a framework that combines the principles of Acceptance Test-Driven Development (ATDD) with AI-powered implementation. This approach allows developers to write acceptance tests first and then use AI to automatically generate the implementation code.
 
 ## Features
 
-- **Acceptance Testing**: Write high-level acceptance tests that validate the behavior of your application from an end-user perspective.
-- **Service Testing**: Test individual services and components in isolation.
-- **Mock Server Integration**: Use MockServer to simulate external dependencies and APIs.
-- **REST Assured Integration**: Test RESTful APIs with ease.
-- **Playwright Support**: Perform UI testing with Playwright.
-- **TestNG Framework**: Leverage the power of TestNG for test organization and execution.
-- **Spring Boot Integration**: Seamlessly integrate with Spring Boot applications.
-- **H2 Database Support**: Use an in-memory H2 database for testing.
-- **JWT Authentication**: Test authentication and authorization with JWT tokens.
+- **TestNG and JUnit Integration**: Support for both TestNG and JUnit testing frameworks
+- **AI-Driven Implementation**: Automatic code generation based on test specifications
+- **Product Management API**: RESTful API for product management with authentication
+- **JWT Authentication**: Secure authentication using JWT tokens
+
+## Project Structure
+
+```
+ATDAID-Framework/
+├── src/
+│   ├── main/java/com/tenpearls/
+│   │   ├── api/                  # REST API controllers
+│   │   ├── service/              # Business logic services
+│   │   │   └── mcp/              # AI service integrations
+│   │   └── testng/               # TestNG integration
+│   └── test/java/com/tenpearls/
+│       ├── accpetance/           # Acceptance tests (TestNG)
+│       ├── integration/          # Integration tests (JUnit)
+│       └── service/              # Service unit tests
+└── pom.xml                       # Maven configuration
+```
 
 ## Getting Started
 
@@ -43,188 +34,56 @@ ATDAID Framework is built on top of Spring Boot and provides a comprehensive tes
 
 - Java 17 or higher
 - Maven 3.6 or higher
-- Git
 
-### Installation
+### Building the Project
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/azfarhussain-10p/ATDAID-Framework.git
-   cd ATDAID-Framework
-   ```
-
-2. Build the project:
-   ```bash
-   mvn clean install
-   ```
-
-## Project Structure
-
-```
-ATDAID-Framework/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── tenpearls/
-│   │   │           ├── domain/         # Domain models
-│   │   │           ├── persistence/    # Repository interfaces
-│   │   │           ├── service/        # Service implementations
-│   │   │           └── SimpleApplication.java
-│   │   └── resources/
-│   │       ├── application.properties  # Application configuration
-│   │       ├── application.yml         # YAML configuration
-│   │       └── logback.xml             # Logging configuration
-│   └── test/
-│       ├── java/
-│       │   └── com/
-│       │       └── tenpearls/
-│       │           ├── accpetance/     # Acceptance tests
-│       │           │   ├── auth/       # Authentication tests
-│       │           │   └── BaseAcceptanceTest.java
-│       │           ├── config/         # Test configuration
-│       │           └── service/        # Service tests
-│       └── resources/
-│           └── application-test.properties  # Test configuration
-└── resources/
-    └── config/                         # Additional configuration
+```bash
+mvn clean install
 ```
 
-## Writing Tests
+### Running Tests
 
-### Acceptance Tests
-
-Acceptance tests validate the behavior of your application from an end-user perspective. They are written in a way that reflects the user's interaction with the system.
-
-Example:
-
-```java
-@Test(description = "Register a new user with valid credentials")
-public void testRegisterUserWithValidCredentials() {
-    // Given
-    Map<String, String> user = new HashMap<>();
-    user.put("email", "test@example.com");
-    user.put("password", "Password123");
-    user.put("firstName", "Test");
-    user.put("lastName", "User");
-    
-    // When
-    Response response = given()
-        .body(user)
-        .when()
-        .post("/api/auth/register")
-        .then()
-        .extract()
-        .response();
-    
-    // Then
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SC_CREATED);
-    assertThat(response.jsonPath().getString("email")).isEqualTo("test@example.com");
-}
-```
-
-### Service Tests
-
-Service tests validate the behavior of individual services and components in isolation.
-
-Example:
-
-```java
-@Test
-public void testRegisterUser_Success() {
-    // Given
-    String email = "test@example.com";
-    String password = "Password123";
-    String firstName = "Test";
-    String lastName = "User";
-    
-    // When
-    User registeredUser = userService.registerUser(email, password, firstName, lastName);
-    
-    // Then
-    assertThat(registeredUser).isNotNull();
-    assertThat(registeredUser.getEmail()).isEqualTo(email);
-}
-```
-
-## Running Tests
-
-To run all tests:
-
+Run all tests:
 ```bash
 mvn test
 ```
 
-To run a specific test class:
-
+Run only TestNG tests:
 ```bash
-mvn test -Dtest=UserRegistrationTest
+mvn test -Dtest=*Test
 ```
 
-To run a specific test method:
-
+Run only JUnit integration tests:
 ```bash
-mvn test -Dtest=UserRegistrationTest#testRegisterUserWithValidCredentials
+mvn test -Pjunit -Dtest=*IntegrationTest
 ```
 
-## Configuration
+## Test-Driven Development Workflow
 
-The framework uses Spring Boot's configuration system. You can configure the application using the following files:
+1. Write acceptance tests that define the expected behavior
+2. Run the tests (they will fail initially)
+3. Use the AI-driven implementation service to generate code
+4. Run the tests again to verify the implementation
+5. Refine the implementation as needed
 
-- `src/main/resources/application.properties` or `application.yml`: Main application configuration
-- `src/test/resources/application-test.properties`: Test-specific configuration
+## API Endpoints
 
-Example test configuration:
+### Product Management
 
-```properties
-# Test configuration
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.username=sa
-spring.datasource.password=
-spring.datasource.driver-class-name=org.h2.Driver
-spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
+- `POST /api/products`: Create a new product (admin only)
+- `GET /api/products/{id}`: Get a product by ID
+- `GET /api/products`: Get all products
 
-# JWT configuration
-jwt.secret=test-secret-key-for-testing-purposes-only
-jwt.expiration=86400000
+### Authentication
 
-# Logging configuration
-logging.level.root=INFO
-logging.level.com.tenpearls=DEBUG
-logging.level.org.hibernate.SQL=DEBUG
-```
+- `POST /api/auth/register`: Register a new user
+- `POST /api/auth/login`: Login and get JWT token
 
-## Logging
+## Documentation
 
-The framework uses Logback for logging. You can configure logging in the `src/main/resources/logback.xml` file.
+Detailed documentation for each feature is available in the `docs` directory:
 
-Example logging configuration:
-
-```xml
-<configuration>
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-    
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-    </root>
-    
-    <logger name="io.restassured" level="WARN" />
-    <logger name="org.apache.http" level="WARN" />
-</configuration>
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -am 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Submit a pull request
+- [Product Management](docs/product-management.md): Documentation for the product management API
 
 ## License
 
