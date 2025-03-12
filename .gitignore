@@ -58,12 +58,23 @@ buildNumber.properties
 /nbdist/
 /.nb-gradle/
 build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
 # VS Code
 .vscode/
 
+# Spring Boot
+.spring-boot-devtools
+
 # Mac OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Windows
 Thumbs.db
@@ -80,3 +91,8 @@ test-output/
 # Application properties with sensitive information
 application-local.properties
 application-local.yml
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
