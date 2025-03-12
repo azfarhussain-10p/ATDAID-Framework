@@ -18,12 +18,29 @@ ATDAID (Acceptance Test-Driven AI Development) is a framework for developing sof
 ```
 ├── src
 │   ├── main
-│   │   ├── java           # Main application code
-│   │   └── resources      # Application properties
+│   │   ├── java
+│   │   │   └── com.tenpearls
+│   │   │       ├── controller     # REST controllers
+│   │   │       ├── service        # Business logic
+│   │   │       ├── repository     # Data access
+│   │   │       ├── model          # Domain entities
+│   │   │       ├── dto            # Data transfer objects
+│   │   │       ├── security       # Authentication and authorization
+│   │   │       ├── config         # Application configuration
+│   │   │       └── api            # API definitions
+│   │   └── resources              # Application properties
 │   └── test
-│       ├── java           # Test code
-│       └── resources      # Test properties
-└── pom.xml               # Maven configuration
+│       ├── java
+│       │   └── com.tenpearls
+│       │       ├── acceptance     # Acceptance tests (TestNG)
+│       │       ├── integration    # Integration tests (JUnit)
+│       │       ├── service        # Service layer tests
+│       │       ├── persistence    # Repository tests
+│       │       ├── domain         # Domain model tests
+│       │       ├── config         # Configuration tests
+│       │       └── unit           # Unit tests
+│       └── resources              # Test properties
+└── pom.xml                        # Maven configuration
 ```
 
 ## Prerequisites
@@ -50,6 +67,9 @@ mvn test -Dtest=ProductManagementTest
 
 # Run JUnit integration tests
 mvn test -Dtest=ProductManagementIntegrationTest
+
+# Run service layer tests
+mvn test -Dtest=ProductServiceTest
 ```
 
 ## Workflow
@@ -65,12 +85,79 @@ mvn test -Dtest=ProductManagementIntegrationTest
 
 - `POST /api/products` - Create a new product (admin only)
 - `GET /api/products/{id}` - Get product by ID
-- `GET /api/products` - Get all products
+- `GET /api/products/sku/{sku}` - Get product by SKU
+- `GET /api/products` - Get all active products
+- `GET /api/products/paginated` - Get paginated list of active products
+- `PUT /api/products/{id}` - Update a product (admin only)
+- `DELETE /api/products/{id}` - Delete a product (admin only)
+- `PATCH /api/products/{id}/deactivate` - Deactivate a product (admin only)
+- `GET /api/products/search?name={name}` - Search products by name
 
 ### Authentication
 
 - `POST /api/auth/login` - Login and get JWT token
 - `POST /api/auth/register` - Register a new user
+
+## Product Management Features
+
+The e-commerce application includes a comprehensive product management system with the following features:
+
+### Product Entity
+
+The core `Product` entity includes:
+- Unique identifier (ID)
+- Product name and description
+- Price and stock quantity
+- SKU (Stock Keeping Unit) for inventory management
+- Image URL for product display
+- Active status flag
+- Creation and update timestamps
+
+### Product Operations
+
+The system supports the following operations:
+
+1. **Create Product**: Add new products to the catalog (admin only)
+2. **Retrieve Product**: Get product details by ID or SKU
+3. **Update Product**: Modify product information (admin only)
+4. **Delete Product**: Remove products from the catalog (admin only)
+5. **Deactivate Product**: Mark products as inactive without deletion (admin only)
+6. **Search Products**: Find products by name
+7. **List Products**: Get all active products, with optional pagination
+
+### Data Transfer Objects
+
+The application uses DTOs to separate the API contract from the internal domain model:
+
+- **ProductRequest**: Used for creating and updating products
+- **ProductResponse**: Used for returning product information to clients
+
+## Testing Approach
+
+The project follows a comprehensive testing strategy with multiple layers:
+
+### Acceptance Tests
+
+Located in `src/test/java/com/tenpearls/accpetance`, these tests verify that the application meets business requirements from an end-user perspective. They use RestAssured to test the API endpoints.
+
+### Integration Tests
+
+Located in `src/test/java/com/tenpearls/integration`, these tests verify that different components work together correctly. They use Spring's MockMvc to test the API endpoints with a focus on component interactions.
+
+### Service Tests
+
+Located in `src/test/java/com/tenpearls/service`, these tests focus on the business logic layer. They use Mockito to mock dependencies and verify that the service behaves as expected.
+
+### Example Test Cases
+
+The project includes tests for various scenarios:
+
+- Creating products with valid and invalid data
+- Retrieving products by ID and SKU
+- Updating products with valid and invalid data
+- Deleting and deactivating products
+- Searching for products by name
+- Authorization checks for admin-only operations
 
 ## Adding New Tests
 
@@ -78,19 +165,98 @@ mvn test -Dtest=ProductManagementIntegrationTest
 
 Create a new test class in the `src/test/java/com/tenpearls/accpetance` package. These tests verify that your application meets business requirements from a user's perspective.
 
+Example:
+```java
+@Test
+public void testCreateProduct_Success() {
+    // Arrange
+    String token = getAdminToken();
+    ProductRequest request = ProductRequest.builder()
+            .name("Test Product")
+            .description("Test Description")
+            .price(new BigDecimal("99.99"))
+            .stockQuantity(100)
+            .sku("TEST-SKU-001")
+            .build();
+    
+    // Act & Assert
+    given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(request)
+            .when()
+            .post("/api/products")
+            .then()
+            .statusCode(201)
+            .body("name", equalTo("Test Product"));
+}
+```
+
 ### Integration Tests (JUnit)
 
 Create a new test class in the `src/test/java/com/tenpearls/integration` package. These tests verify that different components work together correctly.
+
+Example:
+```java
+@Test
+void testCreateProduct_AsAdmin_Success() throws Exception {
+    // Arrange
+    ProductRequest request = ProductRequest.builder()
+            .name("Test Product")
+            .description("Test Description")
+            .price(new BigDecimal("99.99"))
+            .stockQuantity(100)
+            .sku("TEST-SKU-001")
+            .build();
+
+    // Act & Assert
+    mockMvc.perform(post("/api/products")
+            .header("Authorization", "Bearer " + adminToken)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.name").value("Test Product"));
+}
+```
+
+### Service Tests
+
+Create a new test class in the `src/test/java/com/tenpearls/service` package. These tests focus on the business logic layer.
+
+Example:
+```java
+@Test
+public void testCreateProduct_Success() {
+    // Given
+    ProductRequest request = ProductRequest.builder()
+            .name("Test Product")
+            .description("Test Description")
+            .price(new BigDecimal("99.99"))
+            .stockQuantity(100)
+            .sku("TEST-SKU-001")
+            .build();
+
+    when(productRepository.existsBySku("TEST-SKU-001")).thenReturn(false);
+    when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+    // When
+    ProductResponse response = productService.createProduct(request);
+
+    // Then
+    assertThat(response.getName()).isEqualTo("Test Product");
+    verify(productRepository).save(any(Product.class));
+}
+```
 
 ## Using AI-Driven Implementation
 
 ```bash
 # Implement from a single test file
-java -jar app.jar implement src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+java -jar app.jar implement src/test/java/com/tenpearls/accpetance/product/ProductManagementTest.java
 
 # Run tests to verify implementation
-java -jar app.jar run src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+java -jar app.jar run src/test/java/com/tenpearls/accpetance/product/ProductManagementTest.java
 
 # Implement and run in one step
-java -jar app.jar implement-and-run src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+java -jar app.jar implement-and-run src/test/java/com/tenpearls/accpetance/product/ProductManagementTest.java
 ```

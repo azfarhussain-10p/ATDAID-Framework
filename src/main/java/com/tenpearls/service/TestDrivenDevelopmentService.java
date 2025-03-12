@@ -1,5 +1,6 @@
 package com.tenpearls.service;
 
+import com.tenpearls.service.mcp.ClaudeService;
 import com.tenpearls.service.mcp.GitHubMcpService;
 import com.tenpearls.service.mcp.PlaywrightMcpService;
 import com.tenpearls.service.mcp.PostgreSqlMcpService;
