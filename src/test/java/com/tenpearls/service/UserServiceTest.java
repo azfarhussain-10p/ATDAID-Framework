@@ -1,8 +1,8 @@
 package com.tenpearls.service;
 
-import com.tenpearls.domain.User;
-import com.tenpearls.persistence.UserRepository;
-import org.mockito.InjectMocks;
+import com.tenpearls.model.User;
+import com.tenpearls.repository.UserRepository;
+import com.tenpearls.security.JwtService;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,7 +15,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class UserServiceTest {
@@ -53,20 +52,21 @@ public class UserServiceTest {
         String lastName = "User";
         String encodedPassword = "encodedPassword";
         
-        User savedUser = User.builder()
-            .id(1L)
-            .email(email)
-            .password(encodedPassword)
-            .firstName(firstName)
-            .lastName(lastName)
-            .build();
+        User savedUser = new User(
+            firstName,
+            lastName,
+            email,
+            encodedPassword,
+            null  // Role
+        );
+        savedUser.setId(1L);
         
         when(userRepository.existsByEmail(email)).thenReturn(false);
         when(passwordEncoder.encode(password)).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
         
         // When
-        User registeredUser = userService.registerUser(email, password, firstName, lastName);
+        User registeredUser = userService.registerUser(firstName, lastName, email, password);
         
         // Then
         assertThat(registeredUser).isNotNull();
@@ -92,7 +92,7 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(email)).thenReturn(true);
         
         // When/Then
-        assertThatThrownBy(() -> userService.registerUser(email, password, firstName, lastName))
+        assertThatThrownBy(() -> userService.registerUser(firstName, lastName, email, password))
             .isInstanceOf(IllegalStateException.class)
             .hasMessage("User with this email already exists");
         
@@ -110,7 +110,7 @@ public class UserServiceTest {
         String lastName = "Email";
         
         // When/Then
-        assertThatThrownBy(() -> userService.registerUser(email, password, firstName, lastName))
+        assertThatThrownBy(() -> userService.registerUser(firstName, lastName, email, password))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Invalid email format");
         
@@ -128,7 +128,7 @@ public class UserServiceTest {
         when(userRepository.existsByEmail(email)).thenReturn(false);
         
         // When/Then
-        assertThatThrownBy(() -> userService.registerUser(email, password, firstName, lastName))
+        assertThatThrownBy(() -> userService.registerUser(firstName, lastName, email, password))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Password must be at least 8 characters and include uppercase, lowercase, and numbers");
         
@@ -144,13 +144,14 @@ public class UserServiceTest {
         String password = "Password123";
         String token = "jwt-token";
         
-        User user = User.builder()
-            .id(1L)
-            .email(email)
-            .password("encodedPassword")
-            .firstName("Test")
-            .lastName("User")
-            .build();
+        User user = new User(
+            "Test",
+            "User",
+            email,
+            "encodedPassword",
+            null  // Role
+        );
+        user.setId(1L);
         
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPassword())).thenReturn(true);
@@ -173,13 +174,14 @@ public class UserServiceTest {
         String email = "test@example.com";
         String password = "WrongPassword";
         
-        User user = User.builder()
-            .id(1L)
-            .email(email)
-            .password("encodedPassword")
-            .firstName("Test")
-            .lastName("User")
-            .build();
+        User user = new User(
+            "Test",
+            "User",
+            email,
+            "encodedPassword",
+            null  // Role
+        );
+        user.setId(1L);
         
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPassword())).thenReturn(false);
