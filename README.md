@@ -1,90 +1,96 @@
 # ATDAID Framework
 
-## Acceptance Test-Driven AI Development Framework
+## Acceptance Test-Driven AI Development
 
-ATDAID (Acceptance Test-Driven AI Development) is a framework that combines the principles of Acceptance Test-Driven Development (ATDD) with AI-powered implementation. This approach allows developers to write acceptance tests first and then use AI to automatically generate the implementation code.
+ATDAID (Acceptance Test-Driven AI Development) is a framework for developing software using acceptance tests as the driver for AI-powered implementation. This approach combines the benefits of Test-Driven Development (TDD) with the power of AI to accelerate software development.
 
 ## Features
 
-- **TestNG and JUnit Integration**: Support for both TestNG and JUnit testing frameworks
-- **AI-Driven Implementation**: Automatic code generation based on test specifications
-- **Product Management API**: RESTful API for product management with authentication
-- **JWT Authentication**: Secure authentication using JWT tokens
+- Integration with TestNG and JUnit for writing expressive tests
+- AI-driven implementation based on test specifications
+- Automatic refinement of implementations when tests fail
+- Support for different types of tests (acceptance, integration, unit)
+- RESTful API for Product Management
+- JWT Authentication
 
 ## Project Structure
 
 ```
-ATDAID-Framework/
-├── src/
-│   ├── main/java/com/tenpearls/
-│   │   ├── api/                  # REST API controllers
-│   │   ├── service/              # Business logic services
-│   │   │   └── mcp/              # AI service integrations
-│   │   └── testng/               # TestNG integration
-│   └── test/java/com/tenpearls/
-│       ├── accpetance/           # Acceptance tests (TestNG)
-│       ├── integration/          # Integration tests (JUnit)
-│       └── service/              # Service unit tests
-└── pom.xml                       # Maven configuration
+├── src
+│   ├── main
+│   │   ├── java           # Main application code
+│   │   └── resources      # Application properties
+│   └── test
+│       ├── java           # Test code
+│       └── resources      # Test properties
+└── pom.xml               # Maven configuration
 ```
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
+- Java 17+
+- Maven 3.8+
+- PostgreSQL (for production)
+- H2 (for testing)
 
-- Java 17 or higher
-- Maven 3.6 or higher
-
-### Building the Project
+## Building the Project
 
 ```bash
 mvn clean install
 ```
 
-### Running Tests
+## Running Tests
 
-Run all tests:
 ```bash
+# Run all tests
 mvn test
+
+# Run specific test
+mvn test -Dtest=ProductManagementTest
+
+# Run JUnit integration tests
+mvn test -Dtest=ProductManagementIntegrationTest
 ```
 
-Run only TestNG tests:
-```bash
-mvn test -Dtest=*Test
-```
+## Workflow
 
-Run only JUnit integration tests:
-```bash
-mvn test -Pjunit -Dtest=*IntegrationTest
-```
-
-## Test-Driven Development Workflow
-
-1. Write acceptance tests that define the expected behavior
-2. Run the tests (they will fail initially)
-3. Use the AI-driven implementation service to generate code
-4. Run the tests again to verify the implementation
-5. Refine the implementation as needed
+1. **Write acceptance tests**: Define what your feature should do
+2. **Run the framework**: Let AI implement the feature
+3. **Refine**: Make adjustments as needed
+4. **Repeat**: For each new feature
 
 ## API Endpoints
 
 ### Product Management
 
-- `POST /api/products`: Create a new product (admin only)
-- `GET /api/products/{id}`: Get a product by ID
-- `GET /api/products`: Get all products
+- `POST /api/products` - Create a new product (admin only)
+- `GET /api/products/{id}` - Get product by ID
+- `GET /api/products` - Get all products
 
 ### Authentication
 
-- `POST /api/auth/register`: Register a new user
-- `POST /api/auth/login`: Login and get JWT token
+- `POST /api/auth/login` - Login and get JWT token
+- `POST /api/auth/register` - Register a new user
 
-## Documentation
+## Adding New Tests
 
-Detailed documentation for each feature is available in the `docs` directory:
+### Acceptance Tests (TestNG)
 
-- [Product Management](docs/product-management.md): Documentation for the product management API
+Create a new test class in the `src/test/java/com/tenpearls/accpetance` package. These tests verify that your application meets business requirements from a user's perspective.
 
-## License
+### Integration Tests (JUnit)
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Create a new test class in the `src/test/java/com/tenpearls/integration` package. These tests verify that different components work together correctly.
+
+## Using AI-Driven Implementation
+
+```bash
+# Implement from a single test file
+java -jar app.jar implement src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+
+# Run tests to verify implementation
+java -jar app.jar run src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+
+# Implement and run in one step
+java -jar app.jar implement-and-run src/test/java/com/tenpearls/accpetance/yourfeature/YourFeatureTest.java
+```
