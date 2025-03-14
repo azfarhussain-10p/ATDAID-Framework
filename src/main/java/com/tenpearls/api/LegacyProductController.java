@@ -13,10 +13,12 @@ import java.util.UUID;
  * 
  * This controller provides endpoints for creating, retrieving, and listing products.
  * Product creation is restricted to users with admin privileges.
+ * 
+ * @deprecated This is a legacy implementation. Use {@link com.tenpearls.controller.ProductController} instead.
  */
 @RestController
-@RequestMapping("/api/products")
-public class ProductController {
+@RequestMapping("/api/legacy/products")
+public class LegacyProductController {
 
     private final Map<String, Product> products = new HashMap<>();
 

@@ -16,6 +16,18 @@ This directory contains comprehensive documentation for the ATDAID (Acceptance T
 
 - [Testing Guide](Testing.md) - Comprehensive guide to testing approaches, including acceptance tests, integration tests, and service layer tests
 
+## Recent Updates
+
+The following documentation has been recently updated:
+
+- **[Testing Guide](Testing.md)** - Added a new "Troubleshooting Integration Tests" section with solutions for common issues encountered in integration tests, including authentication problems, database schema mismatches, NULL value constraints, status code expectations, and test isolation.
+
+- **[Product Management](ProductManagement.md)** - Added a new "Entity-Database Mapping" section detailing the mapping between entity fields and database columns, including table mapping, column naming conventions, database schema, and lifecycle callbacks.
+
+- **[Main README](../README.md)** - Added a "Recent Updates" section documenting the integration test fixes, including database schema alignment, authentication improvements, test data consistency, and status code expectations.
+
+These updates reflect recent improvements to the codebase, particularly focusing on ensuring that integration tests run successfully and reliably.
+
 ## Documentation Structure
 
 Each feature documentation typically includes:

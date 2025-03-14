@@ -23,6 +23,66 @@ The core `Product` entity is defined in `com.tenpearls.model.Product` and includ
 | createdAt      | LocalDateTime   | Timestamp when the product was created           | Auto-generated             |
 | updatedAt      | LocalDateTime   | Timestamp when the product was last updated      | Auto-updated               |
 
+## Entity-Database Mapping
+
+The `Product` entity is mapped to the `products` table in the database using JPA annotations. The mapping follows these conventions:
+
+1. **Table Mapping**: The entity class is mapped to the database table using the `@Table` annotation:
+   ```java
+   @Entity
+   @Table(name = "products")
+   public class Product {
+       // ...
+   }
+   ```
+
+2. **Column Naming Convention**: The database uses snake_case for column names, while the entity uses camelCase for field names. The mapping is handled using the `@Column` annotation:
+   ```java
+   @Column(name = "stock_quantity", nullable = false)
+   private Integer stockQuantity;
+   
+   @Column(name = "image_url")
+   private String imageUrl;
+   
+   @Column(name = "created_at", nullable = false)
+   private LocalDateTime createdAt;
+   
+   @Column(name = "updated_at", nullable = false)
+   private LocalDateTime updatedAt;
+   ```
+
+3. **Database Schema**: The database schema for the `products` table is defined in `schema.sql`:
+   ```sql
+   CREATE TABLE products (
+       id BIGINT AUTO_INCREMENT PRIMARY KEY,
+       name VARCHAR(255) NOT NULL,
+       description VARCHAR(1000),
+       price DECIMAL(10, 2) NOT NULL,
+       stock_quantity INT NOT NULL,
+       sku VARCHAR(100) NOT NULL,
+       image_url VARCHAR(255),
+       active BOOLEAN NOT NULL,
+       created_at TIMESTAMP NOT NULL,
+       updated_at TIMESTAMP NOT NULL
+   );
+   ```
+
+4. **Lifecycle Callbacks**: The entity uses JPA lifecycle callbacks to automatically set the creation and update timestamps:
+   ```java
+   @PrePersist
+   protected void onCreate() {
+       createdAt = LocalDateTime.now();
+       updatedAt = LocalDateTime.now();
+   }
+   
+   @PreUpdate
+   protected void onUpdate() {
+       updatedAt = LocalDateTime.now();
+   }
+   ```
+
+This mapping ensures that the entity fields are correctly stored in and retrieved from the database, maintaining data integrity and consistency.
+
 ## Data Transfer Objects (DTOs)
 
 ### ProductRequest

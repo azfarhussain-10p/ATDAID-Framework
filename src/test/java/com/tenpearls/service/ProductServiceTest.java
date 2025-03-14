@@ -6,9 +6,9 @@ import com.tenpearls.model.Product;
 import com.tenpearls.repository.ProductRepository;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
@@ -31,13 +31,13 @@ public class ProductServiceTest {
 
     private AutoCloseable closeable;
 
-    @BeforeMethod
+    @BeforeEach
     public void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
         productService = new ProductService(productRepository);
     }
 
-    @AfterMethod
+    @AfterEach
     public void tearDown() throws Exception {
         closeable.close();
     }
@@ -295,7 +295,7 @@ public class ProductServiceTest {
     public void testDeactivateProduct_Success() {
         // Given
         Long productId = 1L;
-        Product activeProduct = Product.builder()
+        Product existingProduct = Product.builder()
                 .id(productId)
                 .name("Test Product")
                 .description("Test Description")
@@ -314,12 +314,12 @@ public class ProductServiceTest {
                 .price(new BigDecimal("99.99"))
                 .stockQuantity(100)
                 .sku("TEST-SKU-001")
-                .active(false) // Deactivated
-                .createdAt(activeProduct.getCreatedAt())
+                .active(false)
+                .createdAt(existingProduct.getCreatedAt())
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(activeProduct));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
         when(productRepository.save(any(Product.class))).thenReturn(deactivatedProduct);
 
         // When
@@ -345,8 +345,6 @@ public class ProductServiceTest {
                 .stockQuantity(100)
                 .sku("SKU-001")
                 .active(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
         Product product2 = Product.builder()
@@ -354,15 +352,12 @@ public class ProductServiceTest {
                 .name("Product 2")
                 .description("Description 2")
                 .price(new BigDecimal("149.99"))
-                .stockQuantity(50)
+                .stockQuantity(200)
                 .sku("SKU-002")
                 .active(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
-        List<Product> activeProducts = Arrays.asList(product1, product2);
-        when(productRepository.findByActiveTrue()).thenReturn(activeProducts);
+        when(productRepository.findByActiveTrue()).thenReturn(Arrays.asList(product1, product2));
 
         // When
         List<ProductResponse> responses = productService.getAllActiveProducts();
@@ -380,44 +375,39 @@ public class ProductServiceTest {
     @Test
     public void testSearchProductsByName_Success() {
         // Given
-        String searchName = "iPhone";
+        String searchTerm = "test";
         Product product1 = Product.builder()
                 .id(1L)
-                .name("iPhone 13 Pro")
-                .description("Apple iPhone 13 Pro")
-                .price(new BigDecimal("999.99"))
-                .stockQuantity(50)
-                .sku("IPHONE-13-PRO")
+                .name("Test Product 1")
+                .description("Description 1")
+                .price(new BigDecimal("99.99"))
+                .stockQuantity(100)
+                .sku("SKU-001")
                 .active(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
         Product product2 = Product.builder()
                 .id(2L)
-                .name("iPhone 13")
-                .description("Apple iPhone 13")
-                .price(new BigDecimal("799.99"))
-                .stockQuantity(75)
-                .sku("IPHONE-13")
+                .name("Test Product 2")
+                .description("Description 2")
+                .price(new BigDecimal("149.99"))
+                .stockQuantity(200)
+                .sku("SKU-002")
                 .active(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
 
-        List<Product> searchResults = Arrays.asList(product1, product2);
-        when(productRepository.findByNameContainingIgnoreCase(searchName)).thenReturn(searchResults);
+        when(productRepository.findByNameContainingIgnoreCase(searchTerm)).thenReturn(Arrays.asList(product1, product2));
 
         // When
-        List<ProductResponse> responses = productService.searchProductsByName(searchName);
+        List<ProductResponse> responses = productService.searchProductsByName(searchTerm);
 
         // Then
         assertThat(responses).hasSize(2);
         assertThat(responses.get(0).getId()).isEqualTo(1L);
-        assertThat(responses.get(0).getName()).isEqualTo("iPhone 13 Pro");
+        assertThat(responses.get(0).getName()).isEqualTo("Test Product 1");
         assertThat(responses.get(1).getId()).isEqualTo(2L);
-        assertThat(responses.get(1).getName()).isEqualTo("iPhone 13");
+        assertThat(responses.get(1).getName()).isEqualTo("Test Product 2");
 
-        verify(productRepository).findByNameContainingIgnoreCase(searchName);
+        verify(productRepository).findByNameContainingIgnoreCase(searchTerm);
     }
 } 

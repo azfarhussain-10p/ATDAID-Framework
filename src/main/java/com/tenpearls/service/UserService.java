@@ -4,6 +4,9 @@ import com.tenpearls.model.Role;
 import com.tenpearls.model.User;
 import com.tenpearls.repository.UserRepository;
 import com.tenpearls.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
     
     // Email regex pattern
     private static final Pattern EMAIL_PATTERN = 
@@ -24,10 +28,11 @@ public class UserService {
     private static final Pattern PASSWORD_PATTERN = 
         Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$");
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
     }
 
     public User registerUser(String firstName, String lastName, String email, String password) {
@@ -52,21 +57,35 @@ public class UserService {
             lastName,
             email,
             passwordEncoder.encode(password),
-            Role.USER
+            Role.ROLE_USER
         );
         
         return userRepository.save(user);
     }
 
     public String loginUser(String email, String password) {
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
-        
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid email or password");
+        try {
+            System.out.println("Attempting to authenticate user with email: " + email);
+            
+            // Attempt authentication
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, password)
+            );
+            
+            System.out.println("Authentication successful for user: " + email);
+            User user = (User) authentication.getPrincipal();
+            System.out.println("User role: " + user.getRole());
+            
+            // Generate token
+            String token = jwtService.generateToken(user);
+            System.out.println("JWT token generated successfully for user: " + email);
+            
+            return token;
+        } catch (Exception e) {
+            System.out.println("Authentication failed for user: " + email + ", Error: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Let Spring Security handle the exception
         }
-        
-        return jwtService.generateToken(user);
     }
     
     public User getUserByEmail(String email) {

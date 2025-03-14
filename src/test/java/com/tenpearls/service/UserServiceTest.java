@@ -5,6 +5,9 @@ import com.tenpearls.repository.UserRepository;
 import com.tenpearls.security.JwtService;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -28,6 +31,9 @@ public class UserServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private AuthenticationManager authenticationManager;
+
     private UserService userService;
 
     private AutoCloseable closeable;
@@ -35,7 +41,7 @@ public class UserServiceTest {
     @BeforeMethod
     public void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
-        userService = new UserService(userRepository, passwordEncoder, jwtService);
+        userService = new UserService(userRepository, passwordEncoder, jwtService, authenticationManager);
     }
     
     @AfterMethod
@@ -94,7 +100,7 @@ public class UserServiceTest {
         // When/Then
         assertThatThrownBy(() -> userService.registerUser(firstName, lastName, email, password))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessage("User with this email already exists");
+            .hasMessage("Email already registered");
         
         verify(userRepository).existsByEmail(email);
         verifyNoMoreInteractions(userRepository);
@@ -130,7 +136,7 @@ public class UserServiceTest {
         // When/Then
         assertThatThrownBy(() -> userService.registerUser(firstName, lastName, email, password))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Password must be at least 8 characters and include uppercase, lowercase, and numbers");
+            .hasMessage("Password must be at least 8 characters and contain at least one digit, one lowercase, and one uppercase letter");
         
         verify(userRepository).existsByEmail(email);
         verifyNoMoreInteractions(userRepository);
@@ -153,8 +159,10 @@ public class UserServiceTest {
         );
         user.setId(1L);
         
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(password, user.getPassword())).thenReturn(true);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(user);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenReturn(authentication);
         when(jwtService.generateToken(user)).thenReturn(token);
         
         // When
@@ -163,8 +171,7 @@ public class UserServiceTest {
         // Then
         assertThat(result).isEqualTo(token);
         
-        verify(userRepository).findByEmail(email);
-        verify(passwordEncoder).matches(password, user.getPassword());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtService).generateToken(user);
     }
     
@@ -174,42 +181,15 @@ public class UserServiceTest {
         String email = "test@example.com";
         String password = "WrongPassword";
         
-        User user = new User(
-            "Test",
-            "User",
-            email,
-            "encodedPassword",
-            null  // Role
-        );
-        user.setId(1L);
-        
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(password, user.getPassword())).thenReturn(false);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+            .thenThrow(new IllegalArgumentException("Invalid email or password"));
         
         // When/Then
         assertThatThrownBy(() -> userService.loginUser(email, password))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Invalid email or password");
         
-        verify(userRepository).findByEmail(email);
-        verify(passwordEncoder).matches(password, user.getPassword());
+        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verifyNoInteractions(jwtService);
-    }
-    
-    @Test
-    public void testLoginUser_UserNotFound() {
-        // Given
-        String email = "nonexistent@example.com";
-        String password = "Password123";
-        
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
-        
-        // When/Then
-        assertThatThrownBy(() -> userService.loginUser(email, password))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Invalid email or password");
-        
-        verify(userRepository).findByEmail(email);
-        verifyNoInteractions(passwordEncoder, jwtService);
     }
 }

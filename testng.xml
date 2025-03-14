@@ -5,6 +5,9 @@
         <packages>
             <package name="com.tenpearls.service.*"/>
         </packages>
+        <classes>
+            <class name="com.tenpearls.service.ProductServiceTest"/>
+        </classes>
     </test>
     <test name="Acceptance Tests">
         <packages>
