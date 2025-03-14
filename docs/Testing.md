@@ -246,3 +246,107 @@ java -jar app.jar implement-and-run src/test/java/com/tenpearls/accpetance/yourf
    - Use the Given-When-Then pattern for clear test organization
    - Test both success and failure scenarios
    - Test edge cases and exception handling
+
+## Troubleshooting Integration Tests
+
+When working with integration tests, you might encounter various issues. Here are some common problems and their solutions based on our recent experience:
+
+### 1. Authentication Issues
+
+**Problem**: Tests fail with 401 Unauthorized or 403 Forbidden status codes.
+
+**Solution**:
+- Instead of relying on login requests to obtain authentication tokens, generate JWT tokens directly using the `JwtService`:
+
+```java
+@Autowired
+private JwtService jwtService;
+@Autowired
+private UserRepository userRepository;
+
+@BeforeEach
+void setUp() {
+    // Create or retrieve test users
+    User adminUser = userRepository.findByEmail("admin@example.com").orElse(/* create user */);
+    User regularUser = userRepository.findByEmail("user@example.com").orElse(/* create user */);
+    
+    // Generate tokens directly
+    adminToken = jwtService.generateToken(adminUser);
+    userToken = jwtService.generateToken(regularUser);
+}
+```
+
+This approach bypasses potential issues with the login endpoint and ensures valid tokens for testing.
+
+### 2. Database Schema Mismatches
+
+**Problem**: Tests fail with SQL exceptions related to missing tables or columns.
+
+**Solution**:
+- Ensure your test schema (usually in `src/test/resources/schema.sql`) includes all necessary tables and columns.
+- Verify that column names in the database match the entity field mappings:
+
+```java
+@Entity
+@Table(name = "products")
+public class Product {
+    // ...
+    
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity;
+    
+    // ...
+}
+```
+
+### 3. NULL Value Constraints
+
+**Problem**: Tests fail with `DataIntegrityViolationException` due to NULL values for non-nullable columns.
+
+**Solution**:
+- Ensure all required fields are set in your test data:
+
+```java
+Product product = new Product();
+product.setName("Test Product");
+product.setSku("SKU123");
+product.setPrice(new BigDecimal("99.99"));
+product.setStockQuantity(100); // Don't forget required fields
+product.setActive(true);
+```
+
+### 4. Status Code Expectations
+
+**Problem**: Tests fail with assertions about expected HTTP status codes.
+
+**Solution**:
+- Verify that your test expectations match the actual API behavior:
+
+```java
+// If the API returns 204 No Content instead of 200 OK
+mockMvc.perform(delete("/api/products/" + productId)
+        .header("Authorization", "Bearer " + adminToken))
+        .andExpect(status().isNoContent()); // Use isNoContent() instead of isOk()
+```
+
+### 5. Test Isolation
+
+**Problem**: Tests interfere with each other due to shared state.
+
+**Solution**:
+- Clean up test data between test executions:
+
+```java
+@BeforeEach
+void setUp() {
+    productRepository.deleteAll();
+    // Set up test data
+}
+
+@AfterEach
+void tearDown() {
+    productRepository.deleteAll();
+}
+```
+
+By addressing these common issues, you can ensure your integration tests run reliably and accurately reflect the behavior of your application.

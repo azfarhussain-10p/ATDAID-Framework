@@ -6,12 +6,15 @@ import com.tenpearls.dto.RegisterRequest;
 import com.tenpearls.model.User;
 import com.tenpearls.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -42,14 +45,36 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, BindingResult bindingResult) {
+        // Log the request details
+        System.out.println("Login request received - Email: " + request.getEmail());
+        
+        // Check for validation errors
+        if (bindingResult.hasErrors()) {
+            String errors = bindingResult.getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+            System.out.println("Validation errors: " + errors);
+            return ResponseEntity.badRequest().body(new AuthResponse(errors));
+        }
+
         try {
+            // Log the authentication attempt
+            System.out.println("Attempting authentication for user: " + request.getEmail());
+            
+            // Attempt to login
             String token = userService.loginUser(request.getEmail(), request.getPassword());
+            
+            // If successful, get the user details
             User user = userService.getUserByEmail(request.getEmail());
             
+            System.out.println("Login successful for user: " + request.getEmail() + " with role: " + user.getRole());
             return ResponseEntity.ok(new AuthResponse(token, user.getId()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new AuthResponse(e.getMessage()));
+        } catch (Exception e) {
+            System.out.println("Login failed for user: " + request.getEmail() + " - Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(401).body(new AuthResponse("Invalid email or password"));
         }
     }
 }
