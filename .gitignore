@@ -4,6 +4,9 @@
 # Log files
 *.log
 logs/
+# Log4j2 specific
+*.log.gz
+*.log.[0-9]*
 
 # BlueJ files
 *.ctxt
@@ -84,6 +87,11 @@ Desktop.ini
 # Test reports
 surefire-reports/
 test-output/
+# ExtentReports specific
+test-output/reports/
+test-output/screenshots/
+extent-reports/
+extent-config.xml
 
 # H2 database files
 *.db

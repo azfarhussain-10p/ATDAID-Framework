@@ -1,5 +1,6 @@
 package com.tenpearls.service;
 
+import com.tenpearls.base.BaseJUnitTest;
 import com.tenpearls.dto.ProductRequest;
 import com.tenpearls.dto.ProductResponse;
 import com.tenpearls.model.Product;
@@ -22,7 +23,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class ProductServiceTest {
+/**
+ * Test class for ProductService.
+ * Extends BaseJUnitTest to integrate with Log4j2 and ExtentReports.
+ */
+public class ProductServiceTest extends BaseJUnitTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -33,17 +38,26 @@ public class ProductServiceTest {
 
     @BeforeEach
     public void setUp() {
+        logger.info("Setting up ProductServiceTest");
         closeable = MockitoAnnotations.openMocks(this);
         productService = new ProductService(productRepository);
+        
+        // Log setup completion
+        logger.debug("ProductServiceTest setup completed");
     }
 
     @AfterEach
     public void tearDown() throws Exception {
+        logger.info("Tearing down ProductServiceTest");
         closeable.close();
+        
+        // Log teardown completion
+        logger.debug("ProductServiceTest teardown completed");
     }
 
     @Test
     public void testCreateProduct_Success() {
+        logger.info("Testing createProduct_Success");
         // Given
         ProductRequest request = ProductRequest.builder()
                 .name("Test Product")
@@ -87,6 +101,9 @@ public class ProductServiceTest {
 
         verify(productRepository).existsBySku("TEST-SKU-001");
         verify(productRepository).save(any(Product.class));
+        
+        // Log test completion
+        logger.debug("createProduct_Success test completed");
     }
 
     @Test
