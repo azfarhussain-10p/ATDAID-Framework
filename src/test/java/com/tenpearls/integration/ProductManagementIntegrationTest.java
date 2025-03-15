@@ -1,13 +1,11 @@
 package com.tenpearls.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tenpearls.base.BaseJUnitTest;
 import com.tenpearls.config.TestConfig;
 import com.tenpearls.config.TestDataInitializer;
 import com.tenpearls.config.TestSecurityConfig;
-import com.tenpearls.dto.AuthResponse;
-import com.tenpearls.dto.LoginRequest;
 import com.tenpearls.dto.ProductRequest;
-import com.tenpearls.dto.ProductResponse;
 import com.tenpearls.model.Product;
 import com.tenpearls.model.Role;
 import com.tenpearls.model.User;
@@ -18,7 +16,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -26,18 +23,18 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import com.jayway.jsonpath.JsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Integration test for Product Management API.
+ * Extends BaseJUnitTest to integrate with Log4j2 and ExtentReports.
+ */
 @SpringBootTest(
     properties = {
         "spring.main.allow-bean-definition-overriding=true",
@@ -47,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({TestConfig.class, TestDataInitializer.class, TestSecurityConfig.class})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class ProductManagementIntegrationTest {
+public class ProductManagementIntegrationTest extends BaseJUnitTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -74,6 +71,7 @@ public class ProductManagementIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        logger.info("Setting up ProductManagementIntegrationTest");
         System.out.println("Starting setUp method...");
         productRepository.deleteAll();
         System.out.println("Products deleted...");
@@ -92,7 +90,8 @@ public class ProductManagementIntegrationTest {
         System.out.println("Admin token: " + adminToken);
         System.out.println("User token: " + userToken);
         
-        System.out.println("setUp method completed.");
+        // Log setup completion
+        logger.debug("ProductManagementIntegrationTest setup completed");
     }
 
     private User createOrUpdateUser(String email, String password, Role role) {
@@ -114,11 +113,16 @@ public class ProductManagementIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        logger.info("Tearing down ProductManagementIntegrationTest");
         productRepository.deleteAll();
+        
+        // Log teardown completion
+        logger.debug("ProductManagementIntegrationTest teardown completed");
     }
 
     @Test
     void testCreateProduct_AsAdmin_Success() throws Exception {
+        logger.info("Testing testCreateProduct_AsAdmin_Success");
         ProductRequest request = ProductRequest.builder()
                 .name("Test Product")
                 .sku("SKU123")
@@ -136,10 +140,14 @@ public class ProductManagementIntegrationTest {
                 .andExpect(jsonPath("$.sku").value(request.getSku()))
                 .andExpect(jsonPath("$.price").value(request.getPrice()))
                 .andExpect(jsonPath("$.active").value(request.isActive()));
+        
+        // Log test completion
+        logger.debug("testCreateProduct_AsAdmin_Success test completed");
     }
 
     @Test
     void testCreateProduct_AsUser_Forbidden() throws Exception {
+        logger.info("Testing testCreateProduct_AsUser_Forbidden");
         ProductRequest request = ProductRequest.builder()
                 .name("Test Product")
                 .sku("SKU123")
@@ -153,10 +161,14 @@ public class ProductManagementIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
+        
+        // Log test completion
+        logger.debug("testCreateProduct_AsUser_Forbidden test completed");
     }
 
     @Test
     void testGetAllActiveProducts_Success() throws Exception {
+        logger.info("Testing testGetAllActiveProducts_Success");
         // Create a test product
         Product product = new Product();
         product.setName("Test Product");
@@ -173,10 +185,14 @@ public class ProductManagementIntegrationTest {
                 .andExpect(jsonPath("$[0].sku").value(product.getSku()))
                 .andExpect(jsonPath("$[0].price").value(product.getPrice()))
                 .andExpect(jsonPath("$[0].active").value(product.isActive()));
+        
+        // Log test completion
+        logger.debug("getTestAllActiveProducts_Success test completed");
     }
 
     @Test
     void testGetProductById_Success() throws Exception {
+        logger.info("Testing testGetProductById_Success");
         // Create a test product
         Product product = new Product();
         product.setName("Test Product");
@@ -193,10 +209,14 @@ public class ProductManagementIntegrationTest {
                 .andExpect(jsonPath("$.sku").value(product.getSku()))
                 .andExpect(jsonPath("$.price").value(product.getPrice()))
                 .andExpect(jsonPath("$.active").value(product.isActive()));
+        
+        // Log test completion
+        logger.debug("getTestProductById_Success test completed");
     }
 
     @Test
     void testUpdateProduct_AsAdmin_Success() throws Exception {
+        logger.info("Testing testUpdateProduct_AsAdmin_Success");
         // Create a test product
         Product product = new Product();
         product.setName("Test Product");
@@ -223,10 +243,14 @@ public class ProductManagementIntegrationTest {
                 .andExpect(jsonPath("$.sku").value(updateRequest.getSku()))
                 .andExpect(jsonPath("$.price").value(updateRequest.getPrice()))
                 .andExpect(jsonPath("$.active").value(updateRequest.isActive()));
+        
+        // Log test completion
+        logger.debug("testUpdateProduct_AsAdmin_Success test completed");
     }
 
     @Test
     void testUpdateProduct_AsUser_Forbidden() throws Exception {
+        logger.info("Testing testUpdateProduct_AsUser_Forbidden");
         // Create a test product
         Product product = new Product();
         product.setName("Test Product");
@@ -249,10 +273,14 @@ public class ProductManagementIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isForbidden());
+        
+        // Log test completion
+        logger.debug("testUpdateProduct_AsUser_Forbidden test completed");
     }
 
     @Test
     void testDeactivateProduct_AsAdmin_Success() throws Exception {
+        logger.info("Testing testDeactivateProduct_AsAdmin_Success");
         // Create a test product
         Product product = new Product();
         product.setName("Test Product");
@@ -265,5 +293,8 @@ public class ProductManagementIntegrationTest {
         mockMvc.perform(delete("/api/products/" + savedProduct.getId())
                 .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNoContent());
+        
+        // Log test completion
+        logger.debug("testDeactivateProduct_AsAdmin_Success test completed");
     }
 } 

@@ -5,10 +5,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
-import static io.restassured.RestAssured.*;
-import io.restassured.response.Response;
-import org.apache.http.HttpStatus;
-import io.restassured.RestAssured;
 
 public class UserRegistrationTest extends BaseAcceptanceTest {
 

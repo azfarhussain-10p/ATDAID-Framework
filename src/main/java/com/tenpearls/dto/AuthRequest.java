@@ -5,15 +5,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * DTO for user registration requests.
+ * DTO for authentication requests.
  */
-public class RegisterRequest {
-
-    @NotBlank(message = "First name is required")
-    private String firstName;
-
-    @NotBlank(message = "Last name is required")
-    private String lastName;
+public class AuthRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -23,30 +17,12 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    public RegisterRequest() {
+    public AuthRequest() {
     }
 
-    public RegisterRequest(String firstName, String lastName, String email, String password) {
-        this.firstName = firstName;
-        this.lastName = lastName;
+    public AuthRequest(String email, String password) {
         this.email = email;
         this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -66,27 +42,15 @@ public class RegisterRequest {
     }
     
     /**
-     * Builder pattern for RegisterRequest.
+     * Builder pattern for AuthRequest.
      */
     public static Builder builder() {
         return new Builder();
     }
     
     public static class Builder {
-        private String firstName;
-        private String lastName;
         private String email;
         private String password;
-        
-        public Builder firstName(String firstName) {
-            this.firstName = firstName;
-            return this;
-        }
-        
-        public Builder lastName(String lastName) {
-            this.lastName = lastName;
-            return this;
-        }
         
         public Builder email(String email) {
             this.email = email;
@@ -98,8 +62,8 @@ public class RegisterRequest {
             return this;
         }
         
-        public RegisterRequest build() {
-            return new RegisterRequest(firstName, lastName, email, password);
+        public AuthRequest build() {
+            return new AuthRequest(email, password);
         }
     }
-}
+} 

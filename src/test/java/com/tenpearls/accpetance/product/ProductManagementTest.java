@@ -8,14 +8,18 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
+/**
+ * Acceptance tests for product management.
+ */
 public class ProductManagementTest extends BaseAcceptanceTest {
     
     @Test
     public void testCreateProduct_Success() {
+        logger.info("Testing createProduct_Success");
+        
         // Arrange
         String token = getAdminToken();
         ProductRequest request = ProductRequest.builder()
@@ -48,10 +52,14 @@ public class ProductManagementTest extends BaseAcceptanceTest {
         assertThat(response.getStockQuantity()).isEqualTo(50);
         assertThat(response.getSku()).isEqualTo("ACC-TEST-001");
         assertThat(response.isActive()).isTrue();
+        
+        logger.debug("createProduct_Success test completed");
     }
     
     @Test
     public void testGetProduct_Success() {
+        logger.info("Testing getProduct_Success");
+        
         // Arrange - Create a product first
         String token = getAdminToken();
         ProductRequest request = ProductRequest.builder()
@@ -87,10 +95,14 @@ public class ProductManagementTest extends BaseAcceptanceTest {
                 .body("stockQuantity", equalTo(25))
                 .body("sku", equalTo("ACC-TEST-002"))
                 .body("active", equalTo(true));
+                
+        logger.debug("getProduct_Success test completed");
     }
     
     @Test
     public void testUpdateProduct_Success() {
+        logger.info("Testing updateProduct_Success");
+        
         // Arrange - Create a product first
         String token = getAdminToken();
         ProductRequest createRequest = ProductRequest.builder()
@@ -141,10 +153,14 @@ public class ProductManagementTest extends BaseAcceptanceTest {
                 .body("sku", equalTo("ACC-TEST-003"))
                 .body("imageUrl", equalTo("https://example.com/updated.jpg"))
                 .body("active", equalTo(true));
+                
+        logger.debug("updateProduct_Success test completed");
     }
     
     @Test
     public void testDeleteProduct_Success() {
+        logger.info("Testing deleteProduct_Success");
+        
         // Arrange - Create a product first
         String token = getAdminToken();
         ProductRequest request = ProductRequest.builder()
@@ -181,10 +197,14 @@ public class ProductManagementTest extends BaseAcceptanceTest {
                 .get("/api/products/" + createdProduct.getId())
                 .then()
                 .statusCode(404);
+                
+        logger.debug("deleteProduct_Success test completed");
     }
     
     @Test
     public void testSearchProducts_Success() {
+        logger.info("Testing searchProducts_Success");
+        
         // Arrange - Create multiple products
         String token = getAdminToken();
         
@@ -247,11 +267,13 @@ public class ProductManagementTest extends BaseAcceptanceTest {
                 .body("size()", greaterThanOrEqualTo(1))
                 .body("find { it.name == 'Samsung Galaxy S21' }", notNullValue())
                 .body("find { it.name == 'Samsung Galaxy S21' }.sku", equalTo("ACC-SAMSUNG-S21"));
+                
+        logger.debug("searchProducts_Success test completed");
     }
     
     private String getAdminToken() {
+        logger.debug("Getting admin token for test");
         // Implementation to get admin token
-        // In a real implementation, this would authenticate as an admin user
         return "admin-token";
     }
 } 

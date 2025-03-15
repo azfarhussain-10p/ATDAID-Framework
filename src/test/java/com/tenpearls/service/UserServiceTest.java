@@ -1,5 +1,6 @@
 package com.tenpearls.service;
 
+import com.tenpearls.base.BaseTest;
 import com.tenpearls.model.User;
 import com.tenpearls.repository.UserRepository;
 import com.tenpearls.security.JwtService;
@@ -13,14 +14,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class UserServiceTest {
+/**
+ * Test class for UserService.
+ * Extends BaseTest to integrate with Log4j2 and ExtentReports.
+ */
+public class UserServiceTest extends BaseTest {
 
     @Mock
     private UserRepository userRepository;
@@ -40,17 +43,22 @@ public class UserServiceTest {
 
     @BeforeMethod
     public void setUp() {
+        logger.info("Setting up UserServiceTest");
         closeable = MockitoAnnotations.openMocks(this);
         userService = new UserService(userRepository, passwordEncoder, jwtService, authenticationManager);
+        logger.debug("UserServiceTest setup completed");
     }
     
     @AfterMethod
     public void tearDown() throws Exception {
+        logger.info("Tearing down UserServiceTest");
         closeable.close();
+        logger.debug("UserServiceTest teardown completed");
     }
 
     @Test
     public void testRegisterUser_Success() {
+        logger.info("Testing registerUser_Success");
         // Given
         String email = "test@example.com";
         String password = "Password123";
@@ -85,10 +93,12 @@ public class UserServiceTest {
         verify(userRepository).existsByEmail(email);
         verify(passwordEncoder).encode(password);
         verify(userRepository).save(any(User.class));
+        logger.debug("registerUser_Success test completed");
     }
     
     @Test
     public void testRegisterUser_ExistingEmail() {
+        logger.info("Testing registerUser_ExistingEmail");
         // Given
         String email = "existing@example.com";
         String password = "Password123";
@@ -105,10 +115,12 @@ public class UserServiceTest {
         verify(userRepository).existsByEmail(email);
         verifyNoMoreInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
+        logger.debug("registerUser_ExistingEmail test completed");
     }
     
     @Test
     public void testRegisterUser_InvalidEmail() {
+        logger.info("Testing registerUser_InvalidEmail");
         // Given
         String email = "invalid-email";
         String password = "Password123";
@@ -121,10 +133,12 @@ public class UserServiceTest {
             .hasMessage("Invalid email format");
         
         verifyNoInteractions(userRepository, passwordEncoder);
+        logger.debug("registerUser_InvalidEmail test completed");
     }
     
     @Test
     public void testRegisterUser_WeakPassword() {
+        logger.info("Testing registerUser_WeakPassword");
         // Given
         String email = "test@example.com";
         String password = "weak";
@@ -141,10 +155,12 @@ public class UserServiceTest {
         verify(userRepository).existsByEmail(email);
         verifyNoMoreInteractions(userRepository);
         verifyNoInteractions(passwordEncoder);
+        logger.debug("registerUser_WeakPassword test completed");
     }
     
     @Test
     public void testLoginUser_Success() {
+        logger.info("Testing loginUser_Success");
         // Given
         String email = "test@example.com";
         String password = "Password123";
@@ -173,10 +189,12 @@ public class UserServiceTest {
         
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verify(jwtService).generateToken(user);
+        logger.debug("loginUser_Success test completed");
     }
     
     @Test
     public void testLoginUser_InvalidCredentials() {
+        logger.info("Testing loginUser_InvalidCredentials");
         // Given
         String email = "test@example.com";
         String password = "WrongPassword";
@@ -191,5 +209,6 @@ public class UserServiceTest {
         
         verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         verifyNoInteractions(jwtService);
+        logger.debug("loginUser_InvalidCredentials test completed");
     }
 }
