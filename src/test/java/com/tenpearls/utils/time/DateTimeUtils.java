@@ -1,10 +1,16 @@
-package com.tenpearls.utils;
+package com.tenpearls.utils.time;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
  * Utility class for date and time operations.
+ * Provides methods for formatting dates and times, as well as getting current date/time values.
  */
 public class DateTimeUtils {
     
@@ -49,5 +55,39 @@ public class DateTimeUtils {
     public static String formatDate(Date date, String pattern) {
         SimpleDateFormat sdf = new SimpleDateFormat(pattern);
         return sdf.format(date);
+    }
+    
+    /**
+     * Formats a LocalDateTime using the specified pattern.
+     * 
+     * @param dateTime The LocalDateTime to format
+     * @param pattern The format pattern
+     * @return The formatted date time string
+     */
+    public static String formatDateTime(LocalDateTime dateTime, String pattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+        return dateTime.format(formatter);
+    }
+    
+    /**
+     * Converts a Date to LocalDateTime.
+     * 
+     * @param date The Date to convert
+     * @return The equivalent LocalDateTime
+     */
+    public static LocalDateTime toLocalDateTime(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+    
+    /**
+     * Converts a LocalDateTime to Date.
+     * 
+     * @param localDateTime The LocalDateTime to convert
+     * @return The equivalent Date
+     */
+    public static Date toDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 } 

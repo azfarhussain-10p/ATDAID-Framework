@@ -1,12 +1,16 @@
 # Compiled class files
 *.class
 
-# Log files
+# Log files and directories
 *.log
 logs/
+logs/daily/
+logs/archive/
 # Log4j2 specific
 *.log.gz
 *.log.[0-9]*
+direct_log.txt
+simple_log.txt
 
 # BlueJ files
 *.ctxt
@@ -90,11 +94,11 @@ test-output/
 # ExtentReports specific
 test-output/reports/
 test-output/screenshots/
-extent-reports/
-extent-config.xml
 
-# H2 database files
+# H2 Database files
 *.db
+*.mv.db
+*.trace.db
 
 # Application properties with sensitive information
 application-local.properties
