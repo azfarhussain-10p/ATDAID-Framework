@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="DEBUG" name="ATDAIDLoggingConfig">
+    <Properties>
+        <Property name="logsDir">${sys:user.dir}/logs</Property>
+        <Property name="patternLayout">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %highlight{%-5level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green, DEBUG=blue, TRACE=white} [%logger{36}] [%X{correlationId}] - %msg%n</Property>
+    </Properties>
+    
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="${patternLayout}"/>
+        </Console>
+        
+        <File name="FileAppender" fileName="${logsDir}/application.log">
+            <PatternLayout pattern="${patternLayout}"/>
+        </File>
+    </Appenders>
+    
+    <Loggers>
+        <Logger name="com.tenpearls" level="debug" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+        
+        <Root level="debug">
+            <AppenderRef ref="ConsoleAppender"/>
+            <AppenderRef ref="FileAppender"/>
+        </Root>
+    </Loggers>
+</Configuration> 
