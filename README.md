@@ -138,20 +138,15 @@ The framework uses Log4j 2 for comprehensive logging with an enhanced fallback m
 
 ```
 logs/
-├── application.log       # Main application log file
-├── error.log            # Error-specific log file
-├── debug.log            # Detailed debug log file
-├── archive/             # Archived log files (older than current day)
-│   ├── application-2023-01-01-1.log.gz
-│   ├── error-2023-01-01-1.log.gz
+├── atdaid.log            # Main application log file
+├── direct_log.txt        # Fallback log file for reliability
+├── daily/                # Daily logs directory
+│   ├── 2025-03-16/       # Date-specific directory
+│   │   ├── test.log      # Test-specific logs
+│   │   └── api.log       # API-specific logs
 │   └── ...
-└── daily/               # Daily log directories
-    ├── 2023-01-01/      # Logs for specific date
-    │   ├── application.log
-    │   ├── error.log
-    │   ├── debug.log
-    │   └── test.log
-    └── ...
+├── archive/              # Archived log files
+└── analysis/             # Log analysis reports
 ```
 
 ### Key Logging Features
@@ -162,6 +157,10 @@ logs/
 - **Correlation IDs**: Track related log entries across the application with unique identifiers
 - **Context-Aware Logging**: Add custom context data to log entries for better debugging
 - **Automatic Log Management**: Logs are automatically rotated, compressed, and cleaned up
+- **Email Alerts**: Critical errors can trigger email notifications to administrators
+- **Log Analysis**: Built-in tools to analyze log patterns and identify recurring issues
+- **Performance Optimization**: Asynchronous logging for high-volume scenarios
+- **Memory Management**: Dynamic log level adjustment based on system load
 
 ### Using LoggerUtils
 
@@ -172,35 +171,41 @@ import org.apache.logging.log4j.Logger;
 
 public class MyClass {
     private static final Logger logger = LogManager.getLogger(MyClass.class);
-    
+
     public void doSomething() {
+        // Start a logging context with correlation ID
+        LoggerUtils.startContext("operation-123");
+        LoggerUtils.addToContext("user", "admin");
+        
         // Enhanced logging with visual indicators
         LoggerUtils.info(logger, "Starting operation");
         LoggerUtils.debug(logger, "Processing data");
         
+        // Log test steps and assertions
+        LoggerUtils.testStep(logger, 1, "Preparing data");
+        LoggerUtils.assertion(logger, "Data is valid");
+        
         try {
             // Process data...
+            long startTime = System.currentTimeMillis();
+            // ... operation code ...
+            long duration = System.currentTimeMillis() - startTime;
+            
+            // Log performance metrics
+            LoggerUtils.performance(logger, "Data processing", duration);
             LoggerUtils.success(logger, "Operation completed successfully");
         } catch (Exception e) {
             LoggerUtils.error(logger, "Operation failed", e);
+            LoggerUtils.critical(logger, "Critical system failure", e);
+        } finally {
+            // Clear the logging context
+            LoggerUtils.clearContext();
         }
-        
-        // Organize logs with sections and separators
-        LoggerUtils.section(logger, "IMPORTANT SECTION");
-        LoggerUtils.data(logger, "Key", "Value");
     }
 }
 ```
 
-Log files are automatically:
-- Organized by date in the `daily` directory
-- Rotated when they reach 10MB in size
-- Compressed and archived in the `archive` directory
-- Deleted after 10 days to manage disk space
-
-Log levels and other configurations can be modified in the `src/main/resources/log4j2.properties` or `src/main/resources/log4j2.xml` file.
-
-For more details on logging and reporting, see [Logging and Reporting Guide](docs/Logging.md).
+For more details on logging and reporting, see [Logging and Reporting Guide](Logging.md).
 
 ## Writing Tests
 
@@ -315,15 +320,31 @@ java -jar app.jar run src/test/java/com/tenpearls/accpetance/product/ProductMana
 
 ## Recent Updates
 
-### Enhanced Logging and Reporting
+### Enhanced Logging and Reporting (March 2025)
 
-- **Structured Log Directory**: Logs are now organized in daily directories for better management
-- **Direct File Logging Fallback**: Added a robust fallback mechanism to ensure logs are captured even if Log4j2 configuration issues occur
-- **Correlation IDs**: Track related log entries across the application
-- **Visual Enhancements**: Improved log readability with emojis and formatting
-- **Automatic Log Rotation**: Logs are automatically rotated, compressed, and cleaned up
-- **Comprehensive ExtentReports**: Enhanced test reports with detailed test information
-- **Dual Logging System**: Logs are now captured by both Log4j2 and a direct file logging system for maximum reliability
+- **Advanced Log Management**: New classes for log rotation, analysis, and monitoring
+  - `LogRotationManager`: Automatically rotates, compresses, and cleans up log files
+  - `LogAnalyzer`: Analyzes logs for patterns, errors, and performance bottlenecks
+  - `LogMonitor`: Monitors logs for critical errors and sends email alerts
+  - `LoggingPerformanceOptimizer`: Optimizes logging performance with async processing
+
+- **Performance Optimizations**:
+  - Asynchronous logging for non-critical messages
+  - Batch processing of log entries
+  - Dynamic log level adjustment based on system load
+  - Memory usage monitoring to prevent excessive resource consumption
+
+- **Reliability Improvements**:
+  - Enhanced direct file logging fallback mechanism
+  - Automatic creation of log directories
+  - Graceful handling of logging failures
+
+- **Analysis and Monitoring**:
+  - Error frequency analysis
+  - Performance bottleneck detection
+  - Correlation of related log entries
+  - Email alerts for critical errors
+  - Daily log analysis reports
 
 ### Utility Organization
 

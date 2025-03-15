@@ -6,11 +6,16 @@
 logs/
 logs/daily/
 logs/archive/
+logs/analysis/
 # Log4j2 specific
 *.log.gz
 *.log.[0-9]*
 direct_log.txt
 simple_log.txt
+# Log analysis files
+analysis_*.txt
+# Log rotation files
+*_[0-9]*.gz
 
 # BlueJ files
 *.ctxt

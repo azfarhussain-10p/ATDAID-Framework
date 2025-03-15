@@ -1,379 +1,290 @@
-# Logging and Reporting Guide
+# Logging System Documentation
 
-This guide provides detailed information about the logging and reporting capabilities of the ATDAID Framework.
+## Overview
 
-## Logging with Log4j2
+The ATDAID Framework includes a comprehensive logging system built on Log4j 2 with enhanced features for reliability, organization, and performance. The system provides structured log directories, fallback mechanisms, correlation tracking, and advanced log management capabilities.
 
-The ATDAID Framework uses Apache Log4j 2 for comprehensive logging. The logging system is designed to be user-friendly, detailed, and organized to facilitate debugging and troubleshooting.
+## Key Components
 
-### Log Directory Structure
+### LoggerUtils
 
-Logs are organized in a structured directory hierarchy:
+The central utility class for all logging operations, providing enhanced methods for various log levels and specialized logging needs.
+
+```java
+// Basic logging
+LoggerUtils.info(logger, "Operation started");
+LoggerUtils.debug(logger, "Processing data: {}", data);
+LoggerUtils.error(logger, "Operation failed", exception);
+LoggerUtils.warn(logger, "Resource running low: {}", resourceName);
+
+// Enhanced logging
+LoggerUtils.success(logger, "Operation completed successfully");
+LoggerUtils.important(logger, "Critical configuration change detected");
+LoggerUtils.critical(logger, "System failure detected");
+
+// Test-specific logging
+LoggerUtils.testStep(logger, 1, "Preparing test data");
+LoggerUtils.assertion(logger, "Response status is 200 OK");
+LoggerUtils.section(logger, "User Authentication Tests");
+
+// Process logging
+LoggerUtils.startProcess(logger, "Data Import");
+LoggerUtils.step(logger, 1, "Validating input file");
+LoggerUtils.endProcess(logger, "Data Import");
+
+// Performance logging
+LoggerUtils.performance(logger, "Database query", 235); // time in ms
+
+// Context management
+LoggerUtils.startContext("transaction-123");
+LoggerUtils.addToContext("user", "admin");
+LoggerUtils.clearContext();
+```
+
+### DirectFileLogger
+
+A fallback logging mechanism that ensures logs are captured even if the primary logging system fails.
+
+```java
+// Direct file logging is used automatically by LoggerUtils
+// but can also be used directly in critical sections
+LoggerUtils.directLog("CRITICAL", "Database connection lost");
+```
+
+### LogRotationManager
+
+Manages log file rotation, compression, and archiving to prevent log files from growing too large and consuming excessive disk space.
+
+```java
+@Autowired
+private LogRotationManager rotationManager;
+
+// Manually trigger log rotation (normally happens automatically)
+rotationManager.rotateLogFiles();
+
+// Configure rotation settings
+rotationManager.setMaxLogFileSize(10 * 1024 * 1024); // 10 MB
+rotationManager.setMaxLogAge(30); // 30 days
+```
+
+### LogAnalyzer
+
+Analyzes log files to identify patterns, recurring errors, and potential issues.
+
+```java
+@Autowired
+private LogAnalyzer logAnalyzer;
+
+// Get error frequency report
+Map<String, Integer> errorFrequency = logAnalyzer.analyzeErrorFrequency();
+
+// Find all logs related to a specific correlation ID
+List<String> relatedLogs = logAnalyzer.findLogsByCorrelationId("transaction-123");
+
+// Identify performance bottlenecks
+List<PerformanceIssue> issues = logAnalyzer.identifyPerformanceBottlenecks();
+```
+
+### LogMonitor
+
+Monitors logs for critical issues and can send email alerts to administrators.
+
+```java
+@Autowired
+private LogMonitor logMonitor;
+
+// Configure monitoring
+logMonitor.addCriticalPattern("Database connection failed");
+logMonitor.setAlertThreshold(5); // Alert after 5 occurrences
+
+// Manually trigger an alert (normally happens automatically)
+logMonitor.sendAlertEmail("Critical error detected", "Details of the error...");
+```
+
+### LoggingPerformanceOptimizer
+
+Optimizes logging performance through asynchronous logging, batch processing, and dynamic log level adjustment.
+
+```java
+@Autowired
+private LoggingPerformanceOptimizer optimizer;
+
+// Enable/disable asynchronous logging
+LoggerUtils.setAsyncLoggingEnabled(true);
+
+// Configure batch size for log processing
+optimizer.setBatchSize(100);
+
+// Configure memory thresholds for dynamic log level adjustment
+optimizer.setHighMemoryThreshold(0.85); // 85% memory usage
+optimizer.setMediumMemoryThreshold(0.70); // 70% memory usage
+```
+
+## Log Directory Structure
+
+The logging system organizes logs in a structured directory hierarchy:
 
 ```
 logs/
-├── application.log       # Main application log file
-├── error.log            # Error-specific log file
-├── debug.log            # Detailed debug log file
-├── archive/             # Archived log files (older than current day)
-│   ├── application-2023-01-01-1.log.gz
-│   ├── error-2023-01-01-1.log.gz
+├── atdaid.log            # Main application log file
+├── daily/                # Daily logs directory
+│   ├── 2025-03-16/       # Date-specific directory
+│   │   ├── application.log  # Application logs for this date
+│   │   └── api.log       # API-specific logs
 │   └── ...
-└── daily/               # Daily log directories
-    ├── 2023-01-01/      # Logs for specific date
-    │   ├── application.log
-    │   ├── error.log
-    │   ├── debug.log
-    │   └── test.log
+└── archive/              # Archived log files
+    ├── atdaid-2025-03-15.log.gz  # Compressed archived logs
     └── ...
 ```
 
-Log files are automatically:
-- Organized by date in the `daily` directory
-- Rotated when they reach 10MB in size
-- Compressed and archived in the `archive` directory
-- Deleted after 10 days to manage disk space
+## Configuration
 
-### Log Levels
+### application.properties
 
-The framework uses the following log levels:
+```properties
+# Logging configuration
+logging.level.root=INFO
+logging.level.com.tenpearls=DEBUG
+logging.file.path=logs
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
 
-| Level | Description |
-|-------|-------------|
-| FATAL | Critical errors causing the application to abort |
-| ERROR | Error events that might still allow the application to continue running |
-| WARN  | Potentially harmful situations |
-| INFO  | Informational messages highlighting application progress |
-| DEBUG | Detailed information for debugging |
-| TRACE | Most detailed information |
+# Log monitoring configuration
+logging.monitor.email.enabled=false
+logging.monitor.email.recipient=admin@example.com
+logging.monitor.email.critical.patterns=Database connection failed,Out of memory error
 
-### Using Logging in Code
+# Log rotation configuration
+logging.rotation.max-file-size=10MB
+logging.rotation.max-history=30
+logging.rotation.total-size-cap=1GB
 
-The framework provides a `LoggerUtils` class that simplifies logging and adds visual enhancements:
-
-```java
-import com.tenpearls.utils.logging.LoggerUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public class MyClass {
-    private static final Logger logger = LogManager.getLogger(MyClass.class);
-    
-    public void doSomething() {
-        // Start a correlation ID for tracking related log entries
-        String correlationId = LoggerUtils.startContext();
-        
-        // Add custom context data
-        LoggerUtils.addToContext("userId", "12345");
-        
-        // Log with different levels and emojis for better readability
-        LoggerUtils.info(logger, "Starting operation");
-        LoggerUtils.debug(logger, "Processing data: {}", data);
-        
-        try {
-            // Log method start with timing
-            long startTime = System.currentTimeMillis();
-            LoggerUtils.methodStart(logger, "processData");
-            
-            // Process data...
-            
-            // Log method end with execution time
-            LoggerUtils.methodEnd(logger, "processData", startTime);
-            
-            // Log success
-            LoggerUtils.success(logger, "Operation completed successfully");
-        } catch (Exception e) {
-            // Log error with exception
-            LoggerUtils.error(logger, "Operation failed", e);
-        } finally {
-            // Clear the logging context
-            LoggerUtils.clearContext();
-        }
-    }
-    
-    public void testMethod() {
-        // Section headers for better organization
-        LoggerUtils.section(logger, "TESTING IMPORTANT FEATURE");
-        
-        // Test steps
-        LoggerUtils.testStep(logger, 1, "Initialize test data");
-        // ... test code ...
-        
-        // Assertions
-        LoggerUtils.assertion(logger, "Value should match expected result");
-        
-        // Data logging
-        LoggerUtils.data(logger, "Response Code", 200);
-        LoggerUtils.data(logger, "Response Body", responseBody);
-        
-        // Separators for visual grouping
-        LoggerUtils.separator(logger);
-    }
-}
+# Log performance configuration
+logging.performance.async.enabled=true
+logging.performance.batch.size=100
+logging.performance.flush.interval=5000
 ```
 
-### Log4j2 Configuration
+### log4j2.properties
 
-The logging configuration is defined in `src/main/resources/log4j2.properties`. Key features include:
+The framework uses a custom Log4j 2 configuration for advanced logging features:
 
-- Colorized console output
-- Daily log files with date-based organization
-- Separate log files for different log levels (error.log, debug.log)
-- Automatic log rotation and compression
-- Log file deletion after 10 days
-- Correlation IDs for tracking related log entries
+```properties
+status = debug
+name = PropertiesConfig
 
-## Enhanced Logging with Direct File Fallback
+# Console appender configuration
+appender.console.type = Console
+appender.console.name = STDOUT
+appender.console.layout.type = PatternLayout
+appender.console.layout.pattern = %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
 
-The ATDAID Framework implements a robust logging mechanism that combines Log4j2 with a direct file logging fallback system. This ensures that logs are captured even if there are issues with the Log4j2 configuration.
+# File appender configuration
+appender.file.type = RollingFile
+appender.file.name = File
+appender.file.fileName = ${sys:logging.file.path}/atdaid.log
+appender.file.filePattern = ${sys:logging.file.path}/archive/atdaid-%d{yyyy-MM-dd}-%i.log.gz
+appender.file.layout.type = PatternLayout
+appender.file.layout.pattern = %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+appender.file.policies.type = Policies
+appender.file.policies.time.type = TimeBasedTriggeringPolicy
+appender.file.policies.time.interval = 1
+appender.file.policies.time.modulate = true
+appender.file.policies.size.type = SizeBasedTriggeringPolicy
+appender.file.policies.size.size = 10MB
+appender.file.strategy.type = DefaultRolloverStrategy
+appender.file.strategy.max = 20
 
-### How It Works
+# Root logger configuration
+rootLogger.level = info
+rootLogger.appenderRef.stdout.ref = STDOUT
+rootLogger.appenderRef.file.ref = File
 
-1. **Primary Logging**: The framework uses Log4j2 as the primary logging mechanism, with all its features like log levels, appenders, and patterns.
-
-2. **Fallback Mechanism**: In addition to Log4j2, the `LoggerUtils` class implements a direct file logging mechanism that writes log messages directly to files using Java's file I/O operations.
-
-3. **Automatic Directory Creation**: The `LoggerUtils` class automatically creates the necessary log directories at startup, ensuring that logs can be written even if the directories don't exist.
-
-4. **Dual Logging**: When you use the `LoggerUtils` methods, log messages are sent to both Log4j2 and the direct file logging system, ensuring that logs are captured even if one system fails.
-
-### Benefits
-
-- **Reliability**: Logs are captured even if there are issues with the Log4j2 configuration.
-- **Simplicity**: The direct file logging system is simple and doesn't depend on external libraries.
-- **Consistency**: Log messages have the same format in both systems, making it easier to analyze logs.
-- **Automatic Directory Management**: Log directories are automatically created and organized by date.
-
-### Example
-
-```java
-import com.tenpearls.utils.logging.LoggerUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-public class MyClass {
-    private static final Logger logger = LogManager.getLogger(MyClass.class);
-    
-    public void doSomething() {
-        // This log message will be sent to both Log4j2 and the direct file logging system
-        LoggerUtils.info(logger, "Starting operation");
-        
-        try {
-            // Process data...
-            LoggerUtils.success(logger, "Operation completed successfully");
-        } catch (Exception e) {
-            // The exception will be logged by both systems
-            LoggerUtils.error(logger, "Operation failed", e);
-        }
-    }
-}
-```
-
-### Direct File Logging Configuration
-
-The direct file logging system is configured in the `LoggerUtils` class:
-
-```java
-private static final String LOGS_DIR = "logs";
-private static final String DAILY_DIR = LOGS_DIR + File.separator + "daily";
-private static final String TODAY_DIR = DAILY_DIR + File.separator + 
-        LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-private static final String FALLBACK_LOG_FILE = TODAY_DIR + File.separator + "application.log";
-```
-
-You can modify these constants to change the log file locations if needed.
-
-## Reporting with ExtentReports
-
-The framework uses ExtentReports for comprehensive test reporting. Reports are automatically generated when tests are run.
-
-### Report Components
-
-The reporting system consists of:
-
-1. **ExtentReportManager**: Manages the creation and configuration of reports
-2. **TestListener**: Captures test events and updates the report
-3. **TestLoggerExtension**: JUnit extension for capturing test events
-
-### Automatic Report Generation
-
-Reports are automatically generated when tests are run using TestNG or JUnit. The reports include:
-
-- Test status (pass, fail, skip)
-- Test duration
-- Test logs
-- Exception details for failed tests
-- Screenshots for UI tests (if available)
-- Test metadata (categories, authors)
-
-### Viewing Reports
-
-After test execution, reports are available in the `test-output/reports` directory. The report filename includes a timestamp:
-
-```
-test-output/reports/TestReport_yyyy-MM-dd_HH-mm-ss.html
-```
-
-To view the latest report:
-
-```bash
-# Windows
-start test-output\reports\TestReport_<timestamp>.html
-
-# Linux/Mac
-open test-output/reports/TestReport_<timestamp>.html
-```
-
-### Programmatically Generating Reports
-
-You can also generate reports programmatically:
-
-```java
-import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.Status;
-import com.tenpearls.reports.ExtentReportManager;
-
-// Initialize the report
-ExtentReportManager.getExtentReports();
-
-// Create a test
-ExtentTest test = ExtentReportManager.startTest("Test Name", "Test Description");
-
-// Log test steps
-test.log(Status.INFO, "Test step information");
-
-// Log test result
-test.pass("Test passed");
-// or
-test.fail("Test failed with exception: " + e.getMessage());
-// or
-test.skip("Test skipped");
-
-// Flush the report to disk (important!)
-ExtentReportManager.flushReport();
-```
-
-### Customizing Reports
-
-You can customize the appearance and content of reports by modifying the `ExtentReportManager` class:
-
-```java
-// Change theme
-htmlReporter.config().setTheme(Theme.DARK); // or Theme.STANDARD
-
-// Add system information
-extent.setSystemInfo("OS", System.getProperty("os.name"));
-extent.setSystemInfo("Java Version", System.getProperty("java.version"));
-extent.setSystemInfo("Environment", "QA");
-
-// Customize report title and name
-htmlReporter.config().setDocumentTitle("ATDAID Test Report");
-htmlReporter.config().setReportName("Test Execution Report");
-```
-
-## Integration with Test Frameworks
-
-### TestNG Integration
-
-For TestNG tests, the `TestListener` class is registered in the `testng.xml` file:
-
-```xml
-<listeners>
-    <listener class-name="com.tenpearls.listeners.TestListener"/>
-</listeners>
-```
-
-### JUnit Integration
-
-For JUnit tests, the `TestLoggerExtension` is applied to test classes:
-
-```java
-@ExtendWith(TestLoggerExtension.class)
-public class MyJUnitTest {
-    // Test methods
-}
-```
-
-Alternatively, extend the `BaseJUnitTest` class which already includes the extension:
-
-```java
-public class MyJUnitTest extends BaseJUnitTest {
-    // Test methods
-}
+# Application logger configuration
+logger.app.name = com.tenpearls
+logger.app.level = debug
+logger.app.additivity = false
+logger.app.appenderRef.stdout.ref = STDOUT
+logger.app.appenderRef.file.ref = File
 ```
 
 ## Best Practices
 
-### Logging Best Practices
+1. **Use LoggerUtils**: Always use the LoggerUtils class for logging to ensure consistent formatting and take advantage of enhanced features.
 
-1. **Use appropriate log levels**: Use ERROR for exceptions, WARN for potential issues, INFO for general information, and DEBUG for detailed debugging information.
+2. **Correlation IDs**: Use correlation IDs for tracking related log entries across different components.
 
-2. **Include context**: Add relevant context to log messages to make them more useful for debugging.
+3. **Context Data**: Add relevant context data to logs for better debugging.
 
-3. **Use correlation IDs**: Start a logging context with a correlation ID to track related log entries.
+4. **Log Levels**: Use appropriate log levels:
+   - ERROR: For errors that affect functionality
+   - WARN: For potential issues that don't stop execution
+   - INFO: For significant events in normal operation
+   - DEBUG: For detailed troubleshooting information
+   - TRACE: For very detailed debugging
 
-4. **Log method entry and exit**: Use `methodStart` and `methodEnd` to log method execution with timing information.
+5. **Performance Considerations**:
+   - Enable asynchronous logging for high-volume scenarios
+   - Use parameterized logging to avoid string concatenation
+   - Avoid excessive logging in tight loops
 
-5. **Organize logs with sections**: Use `section` and `separator` to organize logs for better readability.
+6. **Sensitive Data**: Never log sensitive information like passwords, tokens, or personal data.
 
-6. **Log test steps and assertions**: Use `testStep` and `assertion` to document test execution.
-
-7. **Clear the logging context**: Always clear the logging context when done to prevent context data leakage.
-
-### Reporting Best Practices
-
-1. **Use descriptive test names**: Make your test names clear and descriptive.
-
-2. **Add test descriptions**: Include detailed descriptions for tests to make reports more informative.
-
-3. **Categorize tests**: Use categories to organize your tests in the report.
-
-4. **Add screenshots for UI tests**: Include screenshots for UI tests to make it easier to diagnose failures.
-
-5. **Log important test steps**: Add logs for important steps to make reports more informative.
+7. **Exception Logging**: Always include the exception object when logging exceptions.
 
 ## Troubleshooting
 
-### Common Logging Issues
+### Common Issues
 
-1. **Missing logs**: Ensure the log level is appropriate for your messages. DEBUG messages won't appear if the logger is set to INFO.
+1. **Missing Log Files**: Ensure the logs directory exists and has appropriate permissions.
 
-2. **Log directory not created**: The `LogDirectoryInitializer` should create log directories at startup. If not, check for file system permissions.
+2. **Log4j2 Configuration Issues**: If Log4j2 is not working, check the direct log file for errors.
 
-3. **Correlation ID not appearing**: Ensure you're using `LoggerUtils.startContext()` and that the pattern layout includes `%X{correlationId}`.
+3. **Performance Issues**: If logging is causing performance problems, enable asynchronous logging.
 
-4. **Log4j2 configuration issues**: If you're experiencing issues with Log4j2 configuration, check the direct file logging fallback system. Logs should still be captured in the `logs/daily/YYYY-MM-DD/application.log` file even if Log4j2 is not working correctly.
+4. **Email Alerts Not Working**: Check the SMTP configuration in application.properties.
 
-5. **Direct file logging not working**: If the direct file logging fallback system is not working, check for file system permissions and ensure that the `LoggerUtils` class is being used for logging.
+### Diagnostic Tools
 
-6. **No logs in either system**: If no logs are being captured by either Log4j2 or the direct file logging system, check for file system permissions, disk space, and ensure that the application has write access to the logs directory.
+1. **Log Analysis**: Use the LogAnalyzer to identify patterns and issues in logs.
 
-### Verifying Logging Configuration
+2. **Performance Monitoring**: Use the LoggingPerformanceOptimizer to monitor and optimize logging performance.
 
-To verify that the logging configuration is working correctly, you can run the `LoggerUtilsTest` class:
+3. **Direct File Logging**: Check the direct log file for issues with the primary logging system.
 
-```bash
-mvn exec:java
+## Advanced Features
+
+### Custom Log Appenders
+
+The framework supports custom Log4j2 appenders for specialized logging needs:
+
+```java
+@Component
+public class CustomAppender extends AbstractAppender {
+    // Implementation details
+}
 ```
 
-This will generate log messages using both Log4j2 and the direct file logging system. You should see log messages in the console and in the `logs/daily/YYYY-MM-DD/application.log` file.
+### Log Filtering
 
-You can also run the `DirectFileLogger` class to test the direct file logging system independently:
+Filter logs based on specific criteria:
 
-```bash
-java -cp target/classes com.tenpearls.DirectFileLogger
+```java
+logAnalyzer.filterLogsByLevel("ERROR");
+logAnalyzer.filterLogsByTimeRange(startDate, endDate);
+logAnalyzer.filterLogsByPattern("Database.*failed");
 ```
 
-This will create a log file in the `logs/daily/YYYY-MM-DD/direct_log.txt` file.
+### Integration with Monitoring Systems
 
-### Common Reporting Issues
+The logging system can be integrated with external monitoring systems:
 
-1. **Reports not generated**: Ensure `ExtentReportManager.flushReport()` is called at the end of test execution.
-
-2. **Screenshots not appearing**: Check that the screenshot path is correct and that the file exists.
-
-3. **Test steps not logged**: Ensure you're using `ExtentReportManager.getTest()` to get the current test instance.
+```java
+@Component
+public class PrometheusLogMetricsExporter {
+    // Implementation details
+}
+```
 
 ## Conclusion
 
-The logging and reporting capabilities of the ATDAID Framework provide comprehensive tools for monitoring, debugging, and documenting test execution. By following the best practices outlined in this guide, you can ensure that your logs and reports are informative, organized, and useful for troubleshooting. 
+The ATDAID Framework's logging system provides a comprehensive solution for application logging, with features for reliability, organization, analysis, and performance optimization. By following the best practices and utilizing the provided utilities, developers can ensure effective logging throughout their applications.

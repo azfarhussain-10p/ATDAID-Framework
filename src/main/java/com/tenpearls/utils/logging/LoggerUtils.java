@@ -4,7 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.io.File;
@@ -18,7 +22,13 @@ import java.time.format.DateTimeFormatter;
 /**
  * Enhanced utility class for logging with Log4j2.
  * Provides a simplified and user-friendly interface for common logging operations.
+ * Features:
+ * - Simplified logging methods with consistent formatting
+ * - Context-aware logging with correlation IDs
+ * - Direct file logging fallback for reliability
+ * - Integration with log rotation, analysis, monitoring, and performance optimization
  */
+@Component
 public class LoggerUtils {
     
     private static final Logger logger = LogManager.getLogger(LoggerUtils.class);
@@ -29,11 +39,39 @@ public class LoggerUtils {
             LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
     private static final String FALLBACK_LOG_FILE = TODAY_DIR + File.separator + "application.log";
     
+    // Performance optimization
+    private static LoggingPerformanceOptimizer performanceOptimizer;
+    
+    // Flag to enable/disable asynchronous logging
+    private static boolean asyncLoggingEnabled = true;
+    
     static {
         // Ensure log directories exist
         createDirectory(LOGS_DIR);
         createDirectory(DAILY_DIR);
         createDirectory(TODAY_DIR);
+    }
+    
+    @Autowired(required = false)
+    public void setPerformanceOptimizer(LoggingPerformanceOptimizer optimizer) {
+        LoggerUtils.performanceOptimizer = optimizer;
+        logger.info("Performance optimizer injected into LoggerUtils");
+    }
+    
+    /**
+     * Initialize the LoggerUtils
+     */
+    @PostConstruct
+    public void init() {
+        logger.info("LoggerUtils initialized");
+    }
+    
+    /**
+     * Cleanup resources on shutdown
+     */
+    @PreDestroy
+    public void cleanup() {
+        logger.info("LoggerUtils shutting down");
     }
     
     /**
@@ -117,6 +155,11 @@ public class LoggerUtils {
     public static void info(Logger logger, String message) {
         logger.info("ℹ️ INFO: " + message);
         directLog("INFO", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "ℹ️ INFO: " + message);
+        }
     }
     
     /**
@@ -128,6 +171,11 @@ public class LoggerUtils {
     public static void info(Logger logger, String message, Object... params) {
         logger.info("ℹ️ INFO: " + message, params);
         directLog("INFO", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "ℹ️ INFO: " + message);
+        }
     }
     
     /**
@@ -138,6 +186,11 @@ public class LoggerUtils {
     public static void debug(Logger logger, String message) {
         logger.debug("🔍 DEBUG: " + message);
         directLog("DEBUG", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("DEBUG", logger.getName(), "🔍 DEBUG: " + message);
+        }
     }
     
     /**
@@ -149,6 +202,11 @@ public class LoggerUtils {
     public static void debug(Logger logger, String message, Object... params) {
         logger.debug("🔍 DEBUG: " + message, params);
         directLog("DEBUG", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("DEBUG", logger.getName(), "🔍 DEBUG: " + message);
+        }
     }
     
     /**
@@ -159,6 +217,9 @@ public class LoggerUtils {
     public static void error(Logger logger, String message) {
         logger.error("❌ ERROR: " + message);
         directLog("ERROR", message);
+        
+        // Always log errors synchronously for reliability
+        // No async logging for errors
     }
     
     /**
@@ -170,6 +231,9 @@ public class LoggerUtils {
     public static void error(Logger logger, String message, Object... params) {
         logger.error("❌ ERROR: " + message, params);
         directLog("ERROR", message);
+        
+        // Always log errors synchronously for reliability
+        // No async logging for errors
     }
     
     /**
@@ -180,7 +244,10 @@ public class LoggerUtils {
      */
     public static void error(Logger logger, String message, Throwable throwable) {
         logger.error("❌ ERROR: " + message, throwable);
-        directLog("ERROR", message);
+        directLog("ERROR", message + " - Exception: " + throwable.getMessage());
+        
+        // Always log errors synchronously for reliability
+        // No async logging for errors
     }
     
     /**
@@ -191,6 +258,11 @@ public class LoggerUtils {
     public static void warn(Logger logger, String message) {
         logger.warn("⚠️ WARNING: " + message);
         directLog("WARNING", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("WARN", logger.getName(), "⚠️ WARNING: " + message);
+        }
     }
     
     /**
@@ -202,6 +274,11 @@ public class LoggerUtils {
     public static void warn(Logger logger, String message, Object... params) {
         logger.warn("⚠️ WARNING: " + message, params);
         directLog("WARNING", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("WARN", logger.getName(), "⚠️ WARNING: " + message);
+        }
     }
     
     /**
@@ -212,6 +289,11 @@ public class LoggerUtils {
     public static void success(Logger logger, String message) {
         logger.info("✅ SUCCESS: " + message);
         directLog("SUCCESS", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "✅ SUCCESS: " + message);
+        }
     }
     
     /**
@@ -223,6 +305,11 @@ public class LoggerUtils {
     public static void success(Logger logger, String message, Object... params) {
         logger.info("✅ SUCCESS: " + message, params);
         directLog("SUCCESS", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "✅ SUCCESS: " + message);
+        }
     }
     
     /**
@@ -233,6 +320,11 @@ public class LoggerUtils {
     public static void important(Logger logger, String message) {
         logger.info("🔔 IMPORTANT: " + message);
         directLog("IMPORTANT", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "🔔 IMPORTANT: " + message);
+        }
     }
     
     /**
@@ -244,6 +336,11 @@ public class LoggerUtils {
     public static void important(Logger logger, String message, Object... params) {
         logger.info("🔔 IMPORTANT: " + message, params);
         directLog("IMPORTANT", message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), "🔔 IMPORTANT: " + message);
+        }
     }
     
     /**
@@ -255,6 +352,12 @@ public class LoggerUtils {
     public static void log(Logger logger, Level level, String message) {
         logger.log(level, message);
         directLog(level.name(), message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null && 
+            !level.equals(Level.ERROR) && !level.equals(Level.FATAL)) {
+            performanceOptimizer.asyncLog(level.name(), logger.getName(), message);
+        }
     }
     
     /**
@@ -267,6 +370,12 @@ public class LoggerUtils {
     public static void log(Logger logger, Level level, String message, Object... params) {
         logger.log(level, message, params);
         directLog(level.name(), message);
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null && 
+            !level.equals(Level.ERROR) && !level.equals(Level.FATAL)) {
+            performanceOptimizer.asyncLog(level.name(), logger.getName(), message);
+        }
     }
     
     /**
@@ -361,6 +470,67 @@ public class LoggerUtils {
     public static void endProcess(Logger logger, String processName) {
         logger.info("⏹️ END PROCESS: " + processName);
         directLog("PROCESS END", processName);
+    }
+    
+    /**
+     * Log a critical error that requires immediate attention
+     * @param logger The logger to use
+     * @param message The message to log
+     */
+    public static void critical(Logger logger, String message) {
+        logger.fatal("🚨 CRITICAL: " + message);
+        directLog("CRITICAL", message);
+        
+        // Always log critical errors synchronously for reliability
+        // No async logging for critical errors
+    }
+    
+    /**
+     * Log a critical error with parameters
+     * @param logger The logger to use
+     * @param message The message to log
+     * @param params The parameters to include in the message
+     */
+    public static void critical(Logger logger, String message, Object... params) {
+        logger.fatal("🚨 CRITICAL: " + message, params);
+        directLog("CRITICAL", message);
+        
+        // Always log critical errors synchronously for reliability
+        // No async logging for critical errors
+    }
+    
+    /**
+     * Log a performance metric
+     * @param logger The logger to use
+     * @param operation The operation being measured
+     * @param durationMs The duration in milliseconds
+     */
+    public static void performance(Logger logger, String operation, long durationMs) {
+        logger.info("⚡ PERFORMANCE: {} completed in {} ms", operation, durationMs);
+        directLog("PERFORMANCE", operation + " completed in " + durationMs + " ms");
+        
+        // Use async logging if enabled and optimizer is available
+        if (asyncLoggingEnabled && performanceOptimizer != null) {
+            performanceOptimizer.asyncLog("INFO", logger.getName(), 
+                    "⚡ PERFORMANCE: " + operation + " completed in " + durationMs + " ms");
+        }
+    }
+    
+    /**
+     * Enable or disable asynchronous logging
+     * @param enabled Whether to enable asynchronous logging
+     */
+    public static void setAsyncLoggingEnabled(boolean enabled) {
+        asyncLoggingEnabled = enabled;
+        logger.info("Asynchronous logging {}", enabled ? "enabled" : "disabled");
+    }
+    
+    /**
+     * Check if asynchronous logging is enabled
+     * @return true if asynchronous logging is enabled
+     */
+    public static boolean isAsyncLoggingEnabled() {
+        return asyncLoggingEnabled;
     }
     
     /**
