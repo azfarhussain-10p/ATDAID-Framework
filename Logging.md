@@ -325,6 +325,49 @@ com.tenpearls.exception.AuthenticationException: Invalid credentials
 
 ### Performance Optimization
 
+The logging system includes several performance optimization features to ensure efficient logging even under high load:
+
+### Batch Processing
+
+The `BatchProcessor` class processes log entries in batches to reduce I/O operations and improve performance. Key features include:
+
+- **Logger Caching**: Loggers are cached to avoid repeated lookups, significantly improving performance
+- **Thread-Safe Processing**: Uses `ReentrantLock` to ensure thread safety during batch processing
+- **Configurable Batch Size**: Adjust the batch size to balance between latency and throughput
+- **Configurable Queue Size**: Control memory usage by setting the maximum queue size
+- **Configurable Flush Interval**: Set how frequently batches are processed
+- **Overflow Handling**: Important messages (ERROR, FATAL) are logged directly if the queue is full
+- **Force Processing**: Ability to force immediate processing of all queued entries
+- **Graceful Shutdown**: Processes remaining entries on shutdown
+
+Configuration options:
+
+```properties
+# Batch processing configuration
+logging.batch.size=50                # Number of entries to process in a batch
+logging.batch.queue.size=1000        # Maximum size of the entry queue
+logging.batch.flush.interval=5000    # Flush interval in milliseconds
+```
+
+Usage example:
+
+```java
+@Autowired
+private BatchProcessor batchProcessor;
+
+// Add an entry to the batch queue
+batchProcessor.addEntry(Level.INFO, "com.example.MyClass", "This is a message", null);
+
+// Force processing of all entries (useful for testing)
+batchProcessor.forceProcessAll();
+
+// Get statistics
+int droppedCount = batchProcessor.getDroppedEntryCount();
+int queueSize = batchProcessor.getCurrentQueueSize();
+```
+
+### Asynchronous Logging
+
 The `LoggingPerformanceOptimizer` improves logging performance:
 
 - **Asynchronous Logging**: Non-blocking logging for non-critical messages

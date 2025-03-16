@@ -18,6 +18,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/legacy/products")
+@Deprecated
 public class LegacyProductController {
 
     private final Map<String, Product> products = new HashMap<>();

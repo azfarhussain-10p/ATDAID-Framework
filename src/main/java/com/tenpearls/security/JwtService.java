@@ -2,7 +2,6 @@ package com.tenpearls.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.crypto.SecretKey;
 
 @Service
 public class JwtService {
@@ -70,11 +70,11 @@ public class JwtService {
         System.out.println("Building token with expiration: " + expiration);
         String token = Jwts
                 .builder()
-                .setSubject(userDetails.getUsername())
-                .addClaims(extraClaims)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .subject(userDetails.getUsername())
+                .claims(extraClaims)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSignInKey())
                 .compact();
         System.out.println("Generated token: " + token);
         return token;
@@ -106,11 +106,11 @@ public class JwtService {
         System.out.println("Extracting all claims from token using secret key: " + secretKey);
         try {
             Claims claims = Jwts
-                    .parserBuilder()
-                    .setSigningKey(getSignInKey())
+                    .parser()
+                    .verifyWith((SecretKey) getSignInKey())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             System.out.println("Successfully extracted claims: " + claims);
             return claims;
         } catch (Exception e) {
@@ -119,7 +119,7 @@ public class JwtService {
         }
     }
 
-    private Key getSignInKey() {
+    private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }

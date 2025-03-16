@@ -72,4 +72,47 @@ public class LogDirectoryInitializer implements ApplicationListener<ApplicationS
         }
         return false;
     }
+
+    /**
+     * Initializes the log directory structure.
+     * Creates the main logs directory, archive directory, and today's logs directory.
+     * 
+     * @return true if directories were successfully created, false otherwise
+     */
+    public boolean initializeDirectories() {
+        try {
+            // Get base path from system property or use default
+            String basePath = System.getProperty("logging.base.path", System.getProperty("user.dir"));
+            
+            // Create main logs directory
+            File logsDir = new File(basePath, "logs");
+            if (!logsDir.exists()) {
+                logsDir.mkdirs();
+            }
+            
+            // Create archive directory
+            File archiveDir = new File(logsDir, "archive");
+            if (!archiveDir.exists()) {
+                archiveDir.mkdirs();
+            }
+            
+            // Create today's logs directory
+            String today = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+            File todayDir = new File(logsDir, "daily/" + today);
+            if (!todayDir.exists()) {
+                todayDir.mkdirs();
+            }
+            
+            // Create analysis directory
+            File analysisDir = new File(logsDir, "analysis");
+            if (!analysisDir.exists()) {
+                analysisDir.mkdirs();
+            }
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error initializing log directories: " + e.getMessage());
+            return false;
+        }
+    }
 } 

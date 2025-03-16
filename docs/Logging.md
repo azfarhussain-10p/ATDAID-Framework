@@ -1,290 +1,282 @@
-# Logging System Documentation
+# ATDAID Framework Logging System
+
+The ATDAID Framework includes a comprehensive logging system built on Log4j2, designed to provide robust logging capabilities for applications. This document provides detailed information about the logging system architecture, configuration, and usage.
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Key Components](#key-components)
+4. [Configuration](#configuration)
+5. [Best Practices](#best-practices)
+6. [Troubleshooting](#troubleshooting)
+7. [Advanced Topics](#advanced-topics)
+8. [Testing](#testing)
 
 ## Overview
 
-The ATDAID Framework includes a comprehensive logging system built on Log4j 2 with enhanced features for reliability, organization, and performance. The system provides structured log directories, fallback mechanisms, correlation tracking, and advanced log management capabilities.
+The logging system is built on Log4j2 and emphasizes:
+
+- **Reliability**: Ensuring logs are consistently captured and stored
+- **Performance**: Minimizing the impact of logging on application performance
+- **Organization**: Structured logs with context information for better analysis
+- **Analysis**: Tools for analyzing logs to identify patterns and issues
+- **Monitoring**: Real-time monitoring of logs for critical issues
+
+## Architecture
+
+The logging system uses a layered architecture:
+
+1. **Application Layer**: Where log messages are generated
+2. **Logging Facade**: Provides a consistent API for logging
+3. **Logging Implementation**: Log4j2 implementation
+4. **Output Destinations**: Console, files, databases, etc.
+
+### Directory Structure
+
+```
+logs/
+├── daily/                 # Daily log files
+│   └── YYYY-MM-DD/        # Logs organized by date
+├── archive/               # Archived log files
+├── analysis/              # Log analysis reports
+└── monitoring/            # Monitoring configuration and results
+```
 
 ## Key Components
 
 ### LoggerUtils
 
-The central utility class for all logging operations, providing enhanced methods for various log levels and specialized logging needs.
+The `LoggerUtils` class provides a singleton instance for logging operations:
 
 ```java
-// Basic logging
-LoggerUtils.info(logger, "Operation started");
-LoggerUtils.debug(logger, "Processing data: {}", data);
-LoggerUtils.error(logger, "Operation failed", exception);
-LoggerUtils.warn(logger, "Resource running low: {}", resourceName);
+// Get the singleton instance
+LoggerUtils logger = LoggerUtils.getInstance();
 
-// Enhanced logging
-LoggerUtils.success(logger, "Operation completed successfully");
-LoggerUtils.important(logger, "Critical configuration change detected");
-LoggerUtils.critical(logger, "System failure detected");
+// Log messages at different levels
+logger.debug("Debug message");
+logger.info("Info message");
+logger.warning("Warning message");
 
-// Test-specific logging
-LoggerUtils.testStep(logger, 1, "Preparing test data");
-LoggerUtils.assertion(logger, "Response status is 200 OK");
-LoggerUtils.section(logger, "User Authentication Tests");
-
-// Process logging
-LoggerUtils.startProcess(logger, "Data Import");
-LoggerUtils.step(logger, 1, "Validating input file");
-LoggerUtils.endProcess(logger, "Data Import");
-
-// Performance logging
-LoggerUtils.performance(logger, "Database query", 235); // time in ms
-
-// Context management
-LoggerUtils.startContext("transaction-123");
-LoggerUtils.addToContext("user", "admin");
-LoggerUtils.clearContext();
+// Log with context data
+Map<String, Object> context = new HashMap<>();
+context.put("userId", "12345");
+context.put("action", "login");
+logger.debug("User login attempt", context);
 ```
 
 ### DirectFileLogger
 
-A fallback logging mechanism that ensures logs are captured even if the primary logging system fails.
+For direct file logging without going through the Log4j2 configuration:
 
 ```java
-// Direct file logging is used automatically by LoggerUtils
-// but can also be used directly in critical sections
-LoggerUtils.directLog("CRITICAL", "Database connection lost");
+// Log directly to a file
+logger.directLog("Critical error occurred", "errors.log");
+```
+
+### LogDirectoryInitializer
+
+Initializes the log directory structure:
+
+```java
+// Initialize log directories
+LogDirectoryInitializer initializer = new LogDirectoryInitializer();
+boolean success = initializer.initializeDirectories();
 ```
 
 ### LogRotationManager
 
-Manages log file rotation, compression, and archiving to prevent log files from growing too large and consuming excessive disk space.
+Manages log rotation based on size and time:
 
 ```java
-@Autowired
-private LogRotationManager rotationManager;
-
-// Manually trigger log rotation (normally happens automatically)
-rotationManager.rotateLogFiles();
-
-// Configure rotation settings
-rotationManager.setMaxLogFileSize(10 * 1024 * 1024); // 10 MB
-rotationManager.setMaxLogAge(30); // 30 days
+// Rotate logs based on configuration
+LogRotationManager rotationManager = new LogRotationManager();
+rotationManager.rotateLogsIfNeeded();
 ```
 
 ### LogAnalyzer
 
-Analyzes log files to identify patterns, recurring errors, and potential issues.
+Analyzes logs for patterns and issues:
 
 ```java
-@Autowired
-private LogAnalyzer logAnalyzer;
-
-// Get error frequency report
-Map<String, Integer> errorFrequency = logAnalyzer.analyzeErrorFrequency();
-
-// Find all logs related to a specific correlation ID
-List<String> relatedLogs = logAnalyzer.findLogsByCorrelationId("transaction-123");
-
-// Identify performance bottlenecks
-List<PerformanceIssue> issues = logAnalyzer.identifyPerformanceBottlenecks();
+// Analyze logs for errors
+LogAnalyzer analyzer = new LogAnalyzer();
+List<LogAnalysisResult> results = analyzer.analyzeErrorPatterns();
 ```
 
 ### LogMonitor
 
-Monitors logs for critical issues and can send email alerts to administrators.
+Monitors logs for critical issues:
 
 ```java
-@Autowired
-private LogMonitor logMonitor;
-
-// Configure monitoring
-logMonitor.addCriticalPattern("Database connection failed");
-logMonitor.setAlertThreshold(5); // Alert after 5 occurrences
-
-// Manually trigger an alert (normally happens automatically)
-logMonitor.sendAlertEmail("Critical error detected", "Details of the error...");
+// Start log monitoring
+LogMonitor monitor = new LogMonitor();
+monitor.startMonitoring();
 ```
 
 ### LoggingPerformanceOptimizer
 
-Optimizes logging performance through asynchronous logging, batch processing, and dynamic log level adjustment.
+Optimizes logging performance:
 
 ```java
-@Autowired
-private LoggingPerformanceOptimizer optimizer;
+// Check if logging is initialized
+if (LoggingPerformanceOptimizer.isInitialized()) {
+    // Perform logging operations
+}
 
-// Enable/disable asynchronous logging
-LoggerUtils.setAsyncLoggingEnabled(true);
-
-// Configure batch size for log processing
-optimizer.setBatchSize(100);
-
-// Configure memory thresholds for dynamic log level adjustment
-optimizer.setHighMemoryThreshold(0.85); // 85% memory usage
-optimizer.setMediumMemoryThreshold(0.70); // 70% memory usage
-```
-
-## Log Directory Structure
-
-The logging system organizes logs in a structured directory hierarchy:
-
-```
-logs/
-├── atdaid.log            # Main application log file
-├── daily/                # Daily logs directory
-│   ├── 2025-03-16/       # Date-specific directory
-│   │   ├── application.log  # Application logs for this date
-│   │   └── api.log       # API-specific logs
-│   └── ...
-└── archive/              # Archived log files
-    ├── atdaid-2025-03-15.log.gz  # Compressed archived logs
-    └── ...
+// Enable asynchronous logging
+LoggingPerformanceOptimizer.setAsyncLoggingEnabled(true);
 ```
 
 ## Configuration
 
-### application.properties
+### Application Properties
+
+The logging system can be configured through the `application.properties` file:
 
 ```properties
-# Logging configuration
+# Logging Configuration
 logging.level.root=INFO
 logging.level.com.tenpearls=DEBUG
-logging.file.path=logs
-logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+logging.level.org.springframework.web=INFO
+logging.level.org.hibernate=ERROR
 
-# Log monitoring configuration
+# Log4j2 Configuration
+logging.log4j2.level.com.tenpearls=DEBUG
+
+# Log Monitoring Configuration
+logging.monitor.enabled=true
 logging.monitor.email.enabled=false
-logging.monitor.email.recipient=admin@example.com
-logging.monitor.email.critical.patterns=Database connection failed,Out of memory error
+logging.monitor.email.to=admin@example.com
+logging.monitor.email.from=system@example.com
+logging.monitor.email.subject=[ALERT] ATDAID Framework Log Alert
+logging.monitor.check.interval=3600000
 
-# Log rotation configuration
-logging.rotation.max-file-size=10MB
+# Log Rotation Configuration
+logging.rotation.enabled=true
+logging.rotation.max-size=10MB
 logging.rotation.max-history=30
-logging.rotation.total-size-cap=1GB
+logging.rotation.delete-on-start=false
 
-# Log performance configuration
-logging.performance.async.enabled=true
-logging.performance.batch.size=100
-logging.performance.flush.interval=5000
+# Log Performance Configuration
+logging.performance.async-enabled=true
+logging.performance.buffer-size=1000
+logging.performance.flush-interval=100
+
+# Log Directory Configuration
+logging.directory.base=logs
+logging.directory.daily=logs/daily
+logging.directory.analysis=logs/analysis
+logging.directory.create-on-start=true
 ```
 
-### log4j2.properties
+### Spring Configuration
 
-The framework uses a custom Log4j 2 configuration for advanced logging features:
+For Spring applications, you can configure the logging system through Java configuration:
 
-```properties
-status = debug
-name = PropertiesConfig
-
-# Console appender configuration
-appender.console.type = Console
-appender.console.name = STDOUT
-appender.console.layout.type = PatternLayout
-appender.console.layout.pattern = %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
-
-# File appender configuration
-appender.file.type = RollingFile
-appender.file.name = File
-appender.file.fileName = ${sys:logging.file.path}/atdaid.log
-appender.file.filePattern = ${sys:logging.file.path}/archive/atdaid-%d{yyyy-MM-dd}-%i.log.gz
-appender.file.layout.type = PatternLayout
-appender.file.layout.pattern = %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
-appender.file.policies.type = Policies
-appender.file.policies.time.type = TimeBasedTriggeringPolicy
-appender.file.policies.time.interval = 1
-appender.file.policies.time.modulate = true
-appender.file.policies.size.type = SizeBasedTriggeringPolicy
-appender.file.policies.size.size = 10MB
-appender.file.strategy.type = DefaultRolloverStrategy
-appender.file.strategy.max = 20
-
-# Root logger configuration
-rootLogger.level = info
-rootLogger.appenderRef.stdout.ref = STDOUT
-rootLogger.appenderRef.file.ref = File
-
-# Application logger configuration
-logger.app.name = com.tenpearls
-logger.app.level = debug
-logger.app.additivity = false
-logger.app.appenderRef.stdout.ref = STDOUT
-logger.app.appenderRef.file.ref = File
+```java
+@Configuration
+public class LoggingConfig {
+    
+    @Bean
+    public LogDirectoryInitializer logDirectoryInitializer() {
+        return new LogDirectoryInitializer();
+    }
+    
+    @Bean
+    public LoggingPerformanceOptimizer loggingPerformanceOptimizer() {
+        return new LoggingPerformanceOptimizer();
+    }
+    
+    // Other logging beans
+}
 ```
 
 ## Best Practices
 
-1. **Use LoggerUtils**: Always use the LoggerUtils class for logging to ensure consistent formatting and take advantage of enhanced features.
+### Performance
 
-2. **Correlation IDs**: Use correlation IDs for tracking related log entries across different components.
+- Use asynchronous logging for high-throughput applications
+- Log at the appropriate level (DEBUG for development, INFO for production)
+- Use context data sparingly to avoid excessive memory usage
 
-3. **Context Data**: Add relevant context data to logs for better debugging.
+### Reliability
 
-4. **Log Levels**: Use appropriate log levels:
-   - ERROR: For errors that affect functionality
-   - WARN: For potential issues that don't stop execution
-   - INFO: For significant events in normal operation
-   - DEBUG: For detailed troubleshooting information
-   - TRACE: For very detailed debugging
+- Initialize log directories at application startup
+- Configure log rotation to prevent disk space issues
+- Use try-catch blocks around logging operations in critical code paths
 
-5. **Performance Considerations**:
-   - Enable asynchronous logging for high-volume scenarios
-   - Use parameterized logging to avoid string concatenation
-   - Avoid excessive logging in tight loops
+### Organization
 
-6. **Sensitive Data**: Never log sensitive information like passwords, tokens, or personal data.
-
-7. **Exception Logging**: Always include the exception object when logging exceptions.
+- Use consistent log message formats
+- Include relevant context data in log messages
+- Organize logs by date and component
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Missing Log Files**: Ensure the logs directory exists and has appropriate permissions.
+1. **Log files not created**: Ensure the log directories exist and have appropriate permissions
+2. **Missing log messages**: Check the log level configuration
+3. **Performance issues**: Consider enabling asynchronous logging
 
-2. **Log4j2 Configuration Issues**: If Log4j2 is not working, check the direct log file for errors.
+### Debugging
 
-3. **Performance Issues**: If logging is causing performance problems, enable asynchronous logging.
+To debug logging issues:
 
-4. **Email Alerts Not Working**: Check the SMTP configuration in application.properties.
+1. Enable DEBUG level logging for the logging system:
+   ```properties
+   logging.level.com.tenpearls.utils.logging=DEBUG
+   ```
 
-### Diagnostic Tools
+2. Check the console output for logging initialization messages
+3. Verify the log directory structure
 
-1. **Log Analysis**: Use the LogAnalyzer to identify patterns and issues in logs.
-
-2. **Performance Monitoring**: Use the LoggingPerformanceOptimizer to monitor and optimize logging performance.
-
-3. **Direct File Logging**: Check the direct log file for issues with the primary logging system.
-
-## Advanced Features
+## Advanced Topics
 
 ### Custom Log Appenders
 
-The framework supports custom Log4j2 appenders for specialized logging needs:
+You can create custom log appenders for specific needs:
 
 ```java
-@Component
 public class CustomAppender extends AbstractAppender {
     // Implementation details
 }
 ```
 
-### Log Filtering
+### Log Analysis
 
-Filter logs based on specific criteria:
+The `LogAnalyzer` class provides methods for analyzing logs:
 
-```java
-logAnalyzer.filterLogsByLevel("ERROR");
-logAnalyzer.filterLogsByTimeRange(startDate, endDate);
-logAnalyzer.filterLogsByPattern("Database.*failed");
-```
+- Pattern matching
+- Error frequency analysis
+- Performance bottleneck detection
 
-### Integration with Monitoring Systems
+## Testing
 
-The logging system can be integrated with external monitoring systems:
+The logging system includes comprehensive tests in the `LoggingFeaturesTest` class:
 
 ```java
-@Component
-public class PrometheusLogMetricsExporter {
-    // Implementation details
+@Test
+public void testBasicLogging() {
+    // Test basic logging functionality
+}
+
+@Test
+public void testAsyncLogging() {
+    // Test asynchronous logging
+}
+
+@Test
+public void testDirectFileLogging() {
+    // Test direct file logging
 }
 ```
 
-## Conclusion
+To run the logging tests:
 
-The ATDAID Framework's logging system provides a comprehensive solution for application logging, with features for reliability, organization, analysis, and performance optimization. By following the best practices and utilizing the provided utilities, developers can ensure effective logging throughout their applications.
+```bash
+mvn test -Dtest=LoggingFeaturesTest
+```
+
+Note: Some integration tests may fail if run together with the logging tests due to resource conflicts. It's recommended to run the logging tests separately.

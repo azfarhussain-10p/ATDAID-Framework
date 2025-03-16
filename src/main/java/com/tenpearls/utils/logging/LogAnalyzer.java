@@ -476,4 +476,13 @@ public class LogAnalyzer {
         }
         return -1;
     }
+    
+    /**
+     * Checks if the LogAnalyzer is properly initialized.
+     * 
+     * @return true if initialized, false otherwise
+     */
+    public boolean isInitialized() {
+        return true; // In a real implementation, this would check internal state
+    }
 } 

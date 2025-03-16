@@ -1,21 +1,8 @@
-# Compiled class files
+# Compiled class file
 *.class
 
-# Log files and directories
+# Log file
 *.log
-logs/
-logs/daily/
-logs/archive/
-logs/analysis/
-# Log4j2 specific
-*.log.gz
-*.log.[0-9]*
-direct_log.txt
-simple_log.txt
-# Log analysis files
-analysis_*.txt
-# Log rotation files
-*_[0-9]*.gz
 
 # BlueJ files
 *.ctxt
@@ -23,7 +10,7 @@ analysis_*.txt
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files
+# Package Files #
 *.jar
 *.war
 *.nar
@@ -48,68 +35,42 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
-# IntelliJ IDEA
+# IDE files
 .idea/
-*.iws
 *.iml
-*.ipr
-
-# Eclipse
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-# VS Code
 .vscode/
+*.swp
+*.swo
+.project
+.classpath
+.settings/
 
-# Spring Boot
-.spring-boot-devtools
+# Logging directories
+logs/
+logs/daily/
+logs/archive/
+logs/analysis/
+logs/performance/
+logs/batch/
+logs/async/
 
-# Mac OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Test reports
-surefire-reports/
+# Test output
 test-output/
-# ExtentReports specific
-test-output/reports/
-test-output/screenshots/
+extent-reports/
+surefire-reports/
+failsafe-reports/
 
-# H2 Database files
-*.db
-*.mv.db
-*.trace.db
-
-# Application properties with sensitive information
+# Application specific
 application-local.properties
-application-local.yml
+application-dev.properties
+application-test.properties
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Temporary files
+*.tmp
+*.bak
+*.orig
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
