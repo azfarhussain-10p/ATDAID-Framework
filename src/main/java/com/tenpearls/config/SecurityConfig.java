@@ -4,7 +4,7 @@ import com.tenpearls.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -25,23 +25,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf()
-            .disable()
-            .authorizeRequests()
-            .antMatchers("/api/auth/login", "/api/auth/register").permitAll()
-            .antMatchers(HttpMethod.GET, "/api/products", "/api/products/{id}", "/api/products/sku/{sku}", "/api/products/search").permitAll()
-            .antMatchers("/h2-console/**").permitAll()
-            .antMatchers("/api/products/**").hasRole("ADMIN")
-            .anyRequest().authenticated()
-            .and()
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/{id}", "/api/products/sku/{sku}", "/api/products/search").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/api/products/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers()
-            .frameOptions()
-            .disable();
+            .headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.disable())
+            );
 
         return http.build();
     }

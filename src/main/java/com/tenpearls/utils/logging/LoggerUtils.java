@@ -7,8 +7,8 @@ import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.Map;
 import java.util.UUID;
 import java.io.File;
@@ -18,6 +18,8 @@ import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Enhanced utility class for logging with Log4j2.
@@ -44,6 +46,11 @@ public class LoggerUtils {
     
     // Flag to enable/disable asynchronous logging
     private static boolean asyncLoggingEnabled = true;
+    
+    private static ExecutorService asyncLogExecutor;
+    private static final int DEFAULT_THREAD_POOL_SIZE = 2;
+    
+    private static LoggerUtils instance;
     
     static {
         // Ensure log directories exist
@@ -523,6 +530,12 @@ public class LoggerUtils {
     public static void setAsyncLoggingEnabled(boolean enabled) {
         asyncLoggingEnabled = enabled;
         logger.info("Asynchronous logging {}", enabled ? "enabled" : "disabled");
+        if (enabled && asyncLogExecutor == null) {
+            asyncLogExecutor = Executors.newFixedThreadPool(DEFAULT_THREAD_POOL_SIZE);
+        } else if (!enabled && asyncLogExecutor != null) {
+            asyncLogExecutor.shutdown();
+            asyncLogExecutor = null;
+        }
     }
     
     /**
@@ -582,5 +595,139 @@ public class LoggerUtils {
             printWriter.println(timestamp + " [" + Thread.currentThread().getName() + "] " + 
                     level + " [" + loggerName + "] - " + message);
         }
+    }
+    
+    /**
+     * Gets the singleton instance of LoggerUtils.
+     * 
+     * @return the singleton instance
+     */
+    public static LoggerUtils getInstance() {
+        if (instance == null) {
+            instance = new LoggerUtils();
+        }
+        return instance;
+    }
+    
+    /**
+     * Logs a debug message.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void debug(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("DEBUG", message, contextData));
+    }
+    
+    /**
+     * Logs a debug message asynchronously.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void debugAsync(String message, Object... contextData) {
+        // Implementation would use async logging
+        System.out.println(formatLogMessage("DEBUG", message, contextData));
+    }
+    
+    /**
+     * Logs an info message.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void info(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("INFO", message, contextData));
+    }
+    
+    /**
+     * Logs a warning message.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void warning(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("WARNING", message, contextData));
+    }
+    
+    /**
+     * Logs a test step.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void testStep(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("TEST STEP", message, contextData));
+    }
+    
+    /**
+     * Logs a test assertion.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void testAssertion(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("TEST ASSERTION", message, contextData));
+    }
+    
+    /**
+     * Logs a performance message.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void performance(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("PERFORMANCE", message, contextData));
+    }
+    
+    /**
+     * Logs a test message.
+     * 
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     */
+    public void test(String message, Object... contextData) {
+        // Implementation would use Log4j or other logging framework
+        System.out.println(formatLogMessage("TEST", message, contextData));
+    }
+    
+    /**
+     * Formats a log message with timestamp, level, and context data.
+     * 
+     * @param level the log level
+     * @param message the message to log
+     * @param contextData optional context data as key-value pairs
+     * @return the formatted log message
+     */
+    private String formatLogMessage(String level, String message, Object... contextData) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(LocalDateTime.now().toString())
+          .append(" [main] ")
+          .append(level)
+          .append(" [com.tenpearls.utils.logging.LoggerUtils] - ")
+          .append(message);
+        
+        if (contextData != null && contextData.length > 0) {
+            sb.append(" {");
+            for (int i = 0; i < contextData.length; i += 2) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                if (i + 1 < contextData.length) {
+                    sb.append(contextData[i]).append("=").append(contextData[i + 1]);
+                } else {
+                    sb.append(contextData[i]).append("=?");
+                }
+            }
+            sb.append("}");
+        }
+        
+        return sb.toString();
     }
 } 

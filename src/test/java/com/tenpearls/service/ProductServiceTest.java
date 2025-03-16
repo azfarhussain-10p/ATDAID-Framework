@@ -11,7 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -426,5 +426,129 @@ public class ProductServiceTest extends BaseJUnitTest {
         assertThat(responses.get(1).getName()).isEqualTo("Test Product 2");
 
         verify(productRepository).findByNameContainingIgnoreCase(searchTerm);
+    }
+
+    @Test
+    public void testSearchProductsByName_EmptyResults() {
+        // Given
+        String searchTerm = "nonexistent";
+        when(productRepository.findByNameContainingIgnoreCase(searchTerm)).thenReturn(List.of());
+
+        // When
+        List<ProductResponse> responses = productService.searchProductsByName(searchTerm);
+
+        // Then
+        assertThat(responses).isEmpty();
+        verify(productRepository).findByNameContainingIgnoreCase(searchTerm);
+    }
+
+    @Test
+    public void testCreateProduct_ZeroPriceAndQuantity() {
+        // Given
+        ProductRequest request = ProductRequest.builder()
+                .name("Zero Price Product")
+                .description("Product with zero price and quantity")
+                .price(BigDecimal.ZERO)
+                .stockQuantity(0)
+                .sku("ZERO-PRICE-001")
+                .active(true)
+                .build();
+
+        Product savedProduct = Product.builder()
+                .id(1L)
+                .name("Zero Price Product")
+                .description("Product with zero price and quantity")
+                .price(BigDecimal.ZERO)
+                .stockQuantity(0)
+                .sku("ZERO-PRICE-001")
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(productRepository.existsBySku("ZERO-PRICE-001")).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+        // When
+        ProductResponse response = productService.createProduct(request);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getPrice()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(response.getStockQuantity()).isEqualTo(0);
+
+        verify(productRepository).existsBySku("ZERO-PRICE-001");
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    public void testCreateProduct_MaxLengthValues() {
+        // Given
+        String longName = "A".repeat(255); // Max length name
+        String longDescription = "B".repeat(1000); // Max length description
+        String longSku = "C".repeat(50); // Max length SKU
+
+        ProductRequest request = ProductRequest.builder()
+                .name(longName)
+                .description(longDescription)
+                .price(new BigDecimal("99.99"))
+                .stockQuantity(100)
+                .sku(longSku)
+                .active(true)
+                .build();
+
+        Product savedProduct = Product.builder()
+                .id(1L)
+                .name(longName)
+                .description(longDescription)
+                .price(new BigDecimal("99.99"))
+                .stockQuantity(100)
+                .sku(longSku)
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        when(productRepository.existsBySku(longSku)).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+        // When
+        ProductResponse response = productService.createProduct(request);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getName()).hasSize(255);
+        assertThat(response.getDescription()).hasSize(1000);
+        assertThat(response.getSku()).hasSize(50);
+
+        verify(productRepository).existsBySku(longSku);
+        verify(productRepository).save(any(Product.class));
+    }
+
+    @Test
+    public void testGetProductBySku_NotFound() {
+        // Given
+        String sku = "NONEXISTENT-SKU";
+        when(productRepository.findBySku(sku)).thenReturn(Optional.empty());
+
+        // When/Then
+        assertThatThrownBy(() -> productService.getProductBySku(sku))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Product not found with SKU: " + sku);
+
+        verify(productRepository).findBySku(sku);
+    }
+
+    @Test
+    public void testGetAllActiveProducts_EmptyList() {
+        // Given
+        when(productRepository.findByActiveTrue()).thenReturn(List.of());
+
+        // When
+        List<ProductResponse> responses = productService.getAllActiveProducts();
+
+        // Then
+        assertThat(responses).isEmpty();
+        verify(productRepository).findByActiveTrue();
     }
 } 

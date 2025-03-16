@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.8</version>
+        <version>3.2.3</version>
         <relativePath/>
     </parent>
 
@@ -20,16 +20,42 @@
     <description>Automated Test Driven AI Development Framework</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <testng.version>7.7.1</testng.version>
-        <rest-assured.version>5.3.0</rest-assured.version>
-        <jjwt.version>0.11.5</jjwt.version>
-        <log4j2.version>2.20.0</log4j2.version>
-        <extentreports.version>5.0.9</extentreports.version>
+        <testng.version>7.8.0</testng.version>
+        <rest-assured.version>5.4.0</rest-assured.version>
+        <jjwt.version>0.12.3</jjwt.version>
+        <log4j2.version>2.22.1</log4j2.version>
+        <extentreports.version>5.1.1</extentreports.version>
+        <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+        <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+        <jakarta.validation.version>3.0.2</jakarta.validation.version>
+        <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <id>unit-tests-only</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/integration/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencies>
         <!-- Spring Boot -->
@@ -69,6 +95,29 @@
             <groupId>commons-codec</groupId>      
             <artifactId>commons-codec</artifactId>
             <version>1.15</version>
+        </dependency>
+
+        <!-- Jakarta EE APIs -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>${jakarta.servlet.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>${jakarta.persistence.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>${jakarta.validation.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta.annotation.version}</version>
         </dependency>
 
         <!-- Database -->
@@ -127,7 +176,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.28</version>
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
 
@@ -163,7 +212,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.15.1</version>
         </dependency>
         
         <!-- Spring Mail for email notifications -->
@@ -192,7 +241,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.5</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
@@ -202,7 +251,7 @@
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
-                        <version>5.9.2</version>
+                        <version>5.10.2</version>
                     </dependency>
                     <dependency>
                         <groupId>org.testng</groupId>
